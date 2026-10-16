@@ -20,6 +20,10 @@ DGHost.init = function (extPath) {
             if (!f.exists) { return 'ERR|Missing file: ' + f.fsName; }
             $.evalFile(f);
         }
+        /* $.evalFile runs files in THIS function's scope, so the engine
+         * objects would vanish after init returns. Publish them globally. */
+        $.global.DG = DG;
+        $.global.DGAE = DGAE;
         DGHost.ready = true;
         return 'OK|' + DG.version + '|' + app.version;
     } catch (e) {

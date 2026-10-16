@@ -84,8 +84,13 @@ function hostSandbox(ae) {
     const sb = Object.assign({ console }, ae.globals);
     sb.File = function (p) { this.fsName = p; this.exists = fs.existsSync(p); this.parent = { fsName: path.dirname(p) }; };
     sb.$ = { fileName: path.join(EXT, 'host', 'main.jsx'), evalFile: (f) => vm.runInContext(fs.readFileSync(f.fsName, 'utf8'), sb, { filename: f.fsName }) };
+    sb.$.global = sb;
+    sb.$.readFile = (f) => fs.readFileSync(f.fsName, 'utf8');
     vm.createContext(sb);
-    vm.runInContext(fs.readFileSync(path.join(EXT, 'host', 'main.jsx'), 'utf8'), sb);
+    // Real ExtendScript: $.evalFile runs the file in the CALLER's scope (like a
+    // direct eval), not the global one. Emulate that faithfully.
+    const main = fs.readFileSync(path.join(EXT, 'host', 'main.jsx'), 'utf8').replace(/\$\.evalFile\((\w+)\);/g, 'eval($.readFile($1));');
+    vm.runInContext(main, sb);
     return sb;
 }
 
