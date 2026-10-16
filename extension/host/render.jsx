@@ -12,7 +12,7 @@
  *     the whole chart can be moved / scaled at once
  */
 var DGAE = (function () {
-    var comp, ctrl, W, H, layerMap, nameCount, glowDone, LIVE, COLORS, EGP_TEXT;
+    var comp, ctrl, W, H, layerMap, nameCount, glowDone, LIVE, COLORS, EGP_TEXT, BYID;
     var AXIS_MAX = 'Axis Max (0 = auto)';
 
     function P(x, y) { return [x - W / 2, y - H / 2]; }
@@ -128,6 +128,13 @@ var DGAE = (function () {
             code += PROG01; X = from + ' + (' + vref(lv.cell) + ' - ' + from + ') * p'; ref = vref(lv.cell);
         } else if (lv.kind === 'pct') {
             code += PROG01 + sliceCode(lv); X = 'vI / tot * 100 * p';
+        } else if (lv.kind === 'tipValue') {
+            var dotEl = BYID[lv.dot];
+            code += 'var x = thisComp.layer(' + DG.quote(dotEl && dotEl.aeLayerName ? dotEl.aeLayerName : '') + ').transform.position[0] + ' + (W / 2) + ';\n' +
+                'var X = ' + DG.toJSON(lv.xs) + ', A = ' + vArr(lv.cells) + ', v = A[0], k;\n' +
+                'if (x >= X[X.length - 1]) { v = A[A.length - 1]; } else { for (k = 0; k < X.length - 1; k++) { if (x < X[k + 1]) { v = x <= X[k] ? A[k] : ' +
+                (lv.step ? 'A[k]' : 'A[k] + (A[k + 1] - A[k]) * (x - X[k]) / (X[k + 1] - X[k])') + '; break; } } }\n';
+            X = 'v';
         } else if (lv.kind === 'sum') {
             code += PROG01 + 'var a = ' + vArr(lv.cells) + ', s = 0, i; for (i = 0; i < a.length; i++) { s += a[i]; }\n'; X = 's * p'; ref = 's';
         }
@@ -135,6 +142,18 @@ var DGAE = (function () {
         if (ref && fmt.ref !== undefined) { code += 'O.ref = ' + ref + ';\n'; }
         return code + '(' + DG.FMT_SRC + ')(' + X + ', O);';
     }
+    /* Live line / area path rebuilt from the sliders (same smoothing as the preview). */
+    function linePathExpr(lv) {
+        var zeros = 'var t = { i: [], o: [] }; for (i = 0; i < p.length; i++) { t.i.push([0, 0]); t.o.push([0, 0]); }\n';
+        return liveHead() + maxCode(lv.max) +
+            'var X = ' + DG.toJSON(lv.xs) + ', A = ' + vArr(lv.cells) + ', B = ' + lv.base + ', L = ' + lv.len + ', p = [], i;\n' +
+            'for (i = 0; i < X.length; i++) { p.push([X[i], B - A[i] / MX * L]); }\n' +
+            (lv.step ? 'var q = []; for (i = 0; i < p.length; i++) { if (i > 0) { q.push([p[i][0], q[q.length - 1][1]]); } q.push(p[i]); } p = q;\n' : '') +
+            (lv.smooth ? 'var t = (' + DG.SMOOTH_SRC + ')(p);\n' : zeros) +
+            (lv.area ? 'p.push([X[X.length - 1], B]); p.push([X[0], B]); t.i.push([0, 0], [0, 0]); t.o.push([0, 0], [0, 0]);\n' : '') +
+            'createPath(p, t.i, t.o, ' + (lv.area ? 'true' : 'false') + ');';
+    }
+
     function livePosExpr(pos) {
         var code = liveHead();
         if (pos.kind === 'barEnd') {
@@ -367,6 +386,8 @@ var DGAE = (function () {
         if (el.fill) { addTo(l, g, 'ADBE Vector Graphic - Fill', 'Fill'); }
         if (el.stroke) { addTo(l, g, 'ADBE Vector Graphic - Stroke', 'Stroke'); }
         item(l, g, 'Path').property('ADBE Vector Shape').setValue(makeShape(el.pts, el.inT, el.outT, el.closed));
+        if (el.live && el.live.kind === 'linePath' && LIVE) { item(l, g, 'Path').property('ADBE Vector Shape').expression = linePathExpr(el.live); }
+        el.aeLayerName = l.name; el.aeGroup = g;
         if (el.fill) { setFill(l, g, el.fill, el.fillOpacity); }
         if (el.stroke) { setStroke(l, g, el, el.stroke, el.sw, el.cap || 'round'); }
         if (a) { trimDraw(l, g, a); }
@@ -402,6 +423,24 @@ var DGAE = (function () {
         if (el.fill) { setFill(l, g, el.fill); }
         if (el.stroke) { setStroke(l, g, el, el.stroke, el.sw, 'butt'); }
         groupAnims(l, g, el, c);
+        if (el.live && el.live.kind === 'point' && LIVE) {
+            var lp = el.live, pexp = liveHead() + maxCode(lp.max) + '[' + lp.x + ', ' + lp.base + ' - ' + vref(lp.cell) + ' / MX * ' + lp.len + '];';
+            item(l, g, 'Ellipse').property('ADBE Vector Ellipse Position').expression = pexp;
+            if (findA(el, 'pop')) {
+                gt(l, g).property('ADBE Vector Anchor').expression = pexp;
+                gt(l, g).property('ADBE Vector Position').expression = pexp;
+            }
+        }
+        if (fol && el.live && el.live.kind === 'follow' && LIVE && BYID[el.live.line] && BYID[el.live.line].aeLayerName) {
+            /* live: sit on the end of the trimmed path, wherever the data moved it */
+            var ln = BYID[el.live.line];
+            l.transform.position.expression = '// DocuGraph: rides the end of the line\n' +
+                'var L = thisComp.layer(' + DG.quote(ln.aeLayerName) + ');\nvar g = L.content(' + DG.quote(ln.aeGroup) + ');\n' +
+                'var e = clamp(g.content("Trim").end / 100, 0.0001, 1);\n' +
+                'thisLayer.parent.fromComp(L.toComp(g.content("Path").path.pointOnPath(e)));';
+            el.aeLayerName = l.name;
+            fol = null;
+        }
         if (fol) {
             /* The dot rides the line: one position key per vertex, at the
              * moment the (linear) trim reaches it, with the path's own bezier
@@ -537,7 +576,7 @@ var DGAE = (function () {
             var dot = byId[fl.target];
             if (dot && dot.aeLayerName) {
                 l.transform.position.expression = '// follows the line tip\nthisComp.layer(' + DG.quote(dot.aeLayerName) + ').transform.position + [' + fl.dx + ', ' + fl.dy + '];';
-                if (fl.vals) {
+                if (fl.vals && !(el.live && LIVE)) {
                     tp.expression = '// DocuGraph live value: value of the line at the tip\n' +
                         'var T = ' + DG.toJSON(fl.times) + ', V = ' + DG.toJSON(fl.vals) + ';\n' +
                         'var v = V[0];\n' +
@@ -654,6 +693,7 @@ var DGAE = (function () {
 
             if (LIVE) { liveSliders(scene); }
             for (i = 0; i < scene.els.length; i++) { byId[scene.els[i].id] = scene.els[i]; }
+            BYID = byId;
             for (i = 0; i < scene.els.length; i++) {
                 var el = scene.els[i], l = null;
                 if (el.type === 'rect') { l = rect(el); } else if (el.type === 'line') { l = line(el); } else if (el.type === 'path') { l = path(el); } else if (el.type === 'circle') { l = circle(el); } else if (el.type === 'ring') { l = ring(el); } else if (el.type === 'text') { l = text(el, byId); }

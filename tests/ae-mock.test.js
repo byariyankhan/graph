@@ -147,13 +147,19 @@ for (const type of Object.keys(DG.VARIANTS)) {
 }
 /* Evaluate live expressions with the slider values: must match the preview. */
 function evalExpr(ex, sliders, progress) {
-    const ctrlLayer = { effect: (n) => () => { if (!(n in sliders)) { throw new Error('no slider ' + n); } return sliders[n]; } };
+    // any layer: has the sliders, and sits far right (a line tip at the end of its line)
+    const ctrlLayer = { effect: (n) => () => { if (!(n in sliders)) { throw new Error('no slider ' + n); } return sliders[n]; }, transform: { position: [1e9, 0] } };
+    const createPath = (p, i, o, c) => {
+        assert.ok(p.length === i.length && p.length === o.length, 'createPath arrays differ');
+        for (const q of p.concat(i, o)) { assert.ok(Number.isFinite(q[0]) && Number.isFinite(q[1]), 'bad path point ' + q); }
+        return { pts: p, closed: c };
+    };
     // eslint-disable-next-line no-new-func
-    return new Function('thisComp', 'effect', 'time', 'clamp', 'return eval(' + JSON.stringify(ex) + ')')(
-        { layer: () => ctrlLayer }, () => () => progress, 1e9, (v, a, b) => Math.min(b, Math.max(a, v)));
+    return new Function('thisComp', 'effect', 'time', 'clamp', 'createPath', 'return eval(' + JSON.stringify(ex) + ')')(
+        { layer: () => ctrlLayer }, () => () => progress, 1e9, (v, a, b) => Math.min(b, Math.max(a, v)), createPath);
 }
 const S2 = require('./load').load(['client/js/preview.js']);
-for (const [type, variant] of [['bar', 'column'], ['bar', 'horizontal'], ['bar', 'grouped'], ['pie', 'donut'], ['pie', 'semi'], ['pie', 'pie'], ['pie', 'rings'], ['counter', 'single'], ['counter', 'compare'], ['counter', 'cards']]) {
+for (const [type, variant] of [['line', 'line'], ['line', 'smooth'], ['line', 'stepped'], ['line', 'area'], ['bar', 'column'], ['bar', 'horizontal'], ['bar', 'grouped'], ['pie', 'donut'], ['pie', 'semi'], ['pie', 'pie'], ['pie', 'rings'], ['counter', 'single'], ['counter', 'compare'], ['counter', 'cards']]) {
     try {
         const ae = makeAE(), sb = hostSandbox(ae);
         sb.DGHost.init(EXT);
@@ -168,7 +174,7 @@ for (const [type, variant] of [['bar', 'column'], ['bar', 'horizontal'], ['bar',
         for (const ex of ae.log.exprs) {
             if (ex.indexOf('DocuGraph live data') < 0) { continue; }
             const v = evalExpr(ex, sliders, 100);
-            const flat = [].concat(v);
+            const flat = v && v.pts ? v.pts.flat() : [].concat(v);
             assert.ok(flat.every(x => typeof x === 'string' || Number.isFinite(x)), 'bad value ' + JSON.stringify(v) + ' from\n' + ex);
         }
         // live text at the end == preview text at the end
@@ -179,11 +185,36 @@ for (const [type, variant] of [['bar', 'column'], ['bar', 'horizontal'], ['bar',
         const got = exprs.map(t => evalExpr(t.expr, sliders, 100)).sort();
         assert.deepStrictEqual(Array.from(got, String), Array.from(want, String));
         // changing a slider changes the output
-        const first = scene.live.cells[0].name, before = exprs.map(t => evalExpr(t.expr, sliders, 100)).join('|');
-        sliders[first] = scene.live.cells[0].value * 1.5 + 1;
-        assert.notStrictEqual(exprs.map(t => evalExpr(t.expr, sliders, 100)).join('|'), before, 'slider had no effect');
+        const liveAll = ae.log.exprs.filter(e => e.indexOf('DocuGraph live data') >= 0);
+        const snap = () => JSON.stringify(liveAll.map(e => evalExpr(e, sliders, 100)));
+        for (const c of new Set([scene.live.cells[0], scene.live.cells[scene.live.cells.length - 1]])) {
+            const before = snap();
+            sliders[c.name] = c.value * 1.5 + 1;
+            assert.notStrictEqual(snap(), before, 'slider ' + c.name + ' had no effect');
+        }
         passed++;
     } catch (e) { fail++; console.error('FAIL live', type, variant, e.message.slice(0, 600)); }
+}
+/* The live line path in AE == the preview's path (same points + tangents) */
+for (const variant of ['line', 'smooth', 'stepped']) {
+    try {
+        const ae = makeAE(), sb = hostSandbox(ae);
+        sb.DGHost.init(EXT);
+        const spec = Object.assign({}, DG.sample('line', variant), { type: 'line', variant });
+        sb.DGHost.build(JSON.stringify(spec));
+        const scene = sb.DG.build(JSON.parse(JSON.stringify(spec)));
+        const sliders = { 'Axis Max (0 = auto)': 0 };
+        for (const c of scene.live.cells) { sliders[c.name] = c.value; }
+        const lines = scene.els.filter(e => e.type === 'path' && e.name.indexOf('Line ') === 0);
+        const pathExprs = ae.log.exprs.filter(e => e.indexOf('createPath') >= 0);
+        assert.strictEqual(pathExprs.length, lines.length);
+        lines.forEach((el, i) => {
+            const got = evalExpr(pathExprs[i], sliders, 100).pts;
+            assert.strictEqual(got.length, el.pts.length, 'vertex count');
+            got.forEach((q, k) => { assert.ok(Math.abs(q[0] - el.pts[k][0]) < 1e-6 && Math.abs(q[1] - el.pts[k][1]) < 1e-6, `vertex ${k}: ${q} vs ${el.pts[k]}`); });
+        });
+        passed++;
+    } catch (e) { fail++; console.error('FAIL live path geometry', variant, e.message); }
 }
 /* Update in place: only DocuGraph layers are replaced, user layers survive */
 try {

@@ -44,8 +44,10 @@ DG.charts.line = function (ctx) {
     }
     var lo = Infinity, hi = -Infinity;
     for (s = 0; s < nS; s++) { for (i = 0; i < n; i++) { if (cum[s][i] !== null) { lo = Math.min(lo, cum[s][i]); hi = Math.max(hi, cum[s][i]); } } }
-    var zero = area || o.zero === true || (o.zero !== false && lo >= 0 && lo < hi * 0.45);
-    var tk = DG.ticks(zero ? Math.min(0, lo) : lo, hi, Number(o.ticks) || 5);
+    /* live data: every point becomes a slider in AE (not for stacked area) */
+    var live = ctx.live && !stacked && lo >= 0;
+    var zero = live || area || o.zero === true || (o.zero !== false && lo >= 0 && lo < hi * 0.45);
+    var tk = live ? DG.liveTicks(hi) : DG.ticks(zero ? Math.min(0, lo) : lo, hi, Number(o.ticks) || 5);
 
     var endLabels = o.endLabels !== false && !stacked && nS <= 6;
     var hlOn = !!o.highlight;
@@ -72,7 +74,25 @@ DG.charts.line = function (ctx) {
     var X = function (ix) { return numericX ? px + (xv[ix] - xv[0]) / (xv[n - 1] - xv[0]) * pw : px + ix / (n - 1) * pw; };
     var Y = function (v2) { return py + ph - (v2 - tk.min) / (tk.max - tk.min) * ph; };
 
-    DG.yGrid(ctx, tk, px, px + pw, Y, F);
+    /* register sliders: "<series> <x label>" */
+    var lcells = [], allCells = [], liveMax = null;
+    if (live) {
+        for (s = 0; s < nS; s++) {
+            var cs = { cells: [], xs: [] };
+            for (i = 0; i < n; i++) {
+                if (S[s].values[i] === null) { continue; }
+                var ci = ctx.cell((nS > 1 ? S[s].name + ' ' : '') + data.cats[i], S[s].values[i]);
+                cs.cells.push(ci); cs.xs.push(X(i)); allCells.push(ci);
+            }
+            lcells.push(cs);
+        }
+        liveMax = { cells: allCells, nice: true };
+    }
+    var liveLine = function (si, isArea) {
+        return { kind: 'linePath', cells: lcells[si].cells, xs: lcells[si].xs, base: Y(0), len: ph, max: liveMax, step: stepped, smooth: smooth, area: isArea };
+    };
+
+    DG.yGrid(ctx, tk, px, px + pw, Y, F, { liveMax: liveMax });
 
     /* x labels — thinned so they never collide */
     var xls = 24 * u, maxLW = 0;
@@ -123,27 +143,30 @@ DG.charts.line = function (ctx) {
             for (k = lower.pts.length - 1; k >= 0; k--) { ap.pts.push(lower.pts[k]); ap.inT.push(lower.outT[k]); ap.outT.push(lower.inT[k]); }
             var xs = [];
             for (k = 0; k < lp.pts.length; k++) { xs.push(lp.pts[k][0]); }
-            ctx.add({
+            var arEl = ctx.add({
                 type: 'path', name: 'Area ' + S[s].name, pts: ap.pts, inT: ap.inT, outT: ap.outT, closed: true,
                 fill: col, fillOpacity: stacked ? 0.88 : 0.22,
                 anim: ctx.A('wipe', t0, T.draw, { ease: null, times: times, xs: xs, y0: py - 10 * u, y1: py + ph + 2 * u })
             });
+            if (live) { arEl.live = liveLine(s, true); }
         }
-        ctx.add({
+        var lineEl = ctx.add({
             type: 'path', name: 'Line ' + S[s].name, pts: lp.pts, inT: lp.inT, outT: lp.outT, closed: false,
             stroke: stacked ? DG.mix(col, th.bg, 0.0) : col, sw: (stacked ? 3 : (isHl ? th.lineW : th.lineW * 0.6)) * u,
             cap: 'round', join: 'round', glow: th.glow && isHl,
             anim: ctx.A('draw', t0, T.draw, { ease: null })
         });
+        if (live) { lineEl.live = liveLine(s, false); }
 
         /* point markers, popping as the line reaches them */
         var dots = o.dots === true || (o.dots !== false && n <= 14 && !stacked && !stepped);
         if (dots) {
             for (k = 0; k < lp.pts.length; k++) {
-                ctx.add({
+                var pe = ctx.add({
                     type: 'circle', name: 'Point ' + S[s].name + ' ' + (k + 1), layer: 'Points ' + S[s].name, cx: lp.pts[k][0], cy: lp.pts[k][1],
                     r: 6 * u, fill: th.bg, stroke: col, sw: 3 * u, anim: ctx.A('pop', times[k], T.pop * 0.7, { over: ctx.over })
                 });
+                if (live) { pe.live = { kind: 'point', cell: lcells[s].cells[k], x: lp.pts[k][0], base: Y(0), len: ph, max: liveMax }; }
             }
         }
 
@@ -156,6 +179,7 @@ DG.charts.line = function (ctx) {
                 anim: [ctx.A('follow', t0, T.draw, { ease: null, pts: lp.pts, inT: lp.inT, outT: lp.outT, times: times }),
                     ctx.A('pop', t0 - 0.2, T.pop, { over: ctx.over })]
             });
+            if (live) { dot.live = { kind: 'follow', line: lineEl.id }; }
             tips.push({ dot: dot, s: s, col: col, path: lp, times: times, endY: lp.pts[lp.pts.length - 1][1] });
         }
     }
@@ -181,5 +205,6 @@ DG.charts.line = function (ctx) {
                 ctx.A('fade', t0, 0.4, { dy: 0, ease: 'easy' })]
         });
         vt.liveFmt = vf;
+        if (live) { vt.live = { kind: 'tipValue', cells: lcells[tp.s].cells, xs: lcells[tp.s].xs, dot: tp.dot.id, step: stepped, fmt: vf }; }
     }
 };

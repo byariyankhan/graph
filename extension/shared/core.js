@@ -314,13 +314,13 @@ DG.ticks = function (min, max, n) {
 /* Live-data axis: always 5 ticks (0, ¼, ½, ¾, max) with a "nice" max. Kept
  * as source so AE expressions compute the identical axis when a data slider
  * changes. */
-DG.NICEMAX_SRC = 'function(m){if(!(m>0))return 1;var r=m/4,e=Math.floor(Math.log(r)/Math.LN10),b=Math.pow(10,e),f=r/b;' +
-    'var s=f<=1.000001?1:f<=2.000001?2:f<=2.500001?2.5:f<=5.000001?5:10;return s*b*4;}';
+DG.NICEMAX_SRC = 'function(m){if(!(m>0))return 1;var r=m/4,e=Math.floor(Math.log(r)/Math.LN10),b=Math.pow(10,e),f=r/b,' +
+    'S=[1,1.25,1.5,2,2.5,3,4,5,6,7.5,8,10],i;for(i=0;i<S.length;i++){if(f<=S[i]*1.000001){return S[i]*b*4;}}return 40*b;}';
 DG.niceMax = eval('(' + DG.NICEMAX_SRC + ')');
 DG.liveTicks = function (max) {
     var M = DG.niceMax(max), st = M / 4;
     var dec = Math.max(0, -Math.floor(Math.log(st) / Math.LN10 + 1e-9));
-    if (Math.abs(st * Math.pow(10, dec) - Math.round(st * Math.pow(10, dec))) > 1e-9) { dec += 1; }
+    while (dec < 6 && Math.abs(st * Math.pow(10, dec) - Math.round(st * Math.pow(10, dec))) > 1e-9) { dec += 1; }
     return { min: 0, max: M, step: st, ticks: [0, st, st * 2, st * 3, M], decimals: dec };
 };
 

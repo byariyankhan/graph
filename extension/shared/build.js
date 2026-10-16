@@ -265,29 +265,20 @@ DG.straight = function (pts) {
     for (var i = 0; i < pts.length; i++) { inT.push([0, 0]); outT.push([0, 0]); }
     return { pts: pts, inT: inT, outT: outT };
 };
-/* Monotone cubic (Fritsch–Carlson) — smooth without overshooting the data. */
+/* Monotone cubic (Fritsch–Carlson) — smooth without overshooting the data.
+ * Kept as source text: AE expressions rebuild live line paths with it. */
+DG.SMOOTH_SRC = 'function(P){var n=P.length,i,I=[],O=[],d=[],m=[],a,b,s,t,dl,dr;' +
+    'if(n<3){for(i=0;i<n;i++){I.push([0,0]);O.push([0,0]);}return{i:I,o:O};}' +
+    'for(i=0;i<n-1;i++){a=P[i+1][0]-P[i][0];d.push(a===0?0:(P[i+1][1]-P[i][1])/a);}' +
+    'm.push(d[0]);for(i=1;i<n-1;i++){m.push(d[i-1]*d[i]<=0?0:(d[i-1]+d[i])/2);}m.push(d[n-2]);' +
+    'for(i=0;i<n-1;i++){if(d[i]===0){m[i]=0;m[i+1]=0;continue;}a=m[i]/d[i];b=m[i+1]/d[i];s=a*a+b*b;' +
+    'if(s>9){t=3/Math.sqrt(s);m[i]=t*a*d[i];m[i+1]=t*b*d[i];}}' +
+    'for(i=0;i<n;i++){dl=i>0?(P[i][0]-P[i-1][0])/3:0;dr=i<n-1?(P[i+1][0]-P[i][0])/3:0;I.push([-dl,-m[i]*dl]);O.push([dr,m[i]*dr]);}' +
+    'return{i:I,o:O};}';
+DG.smoothTan = eval('(' + DG.SMOOTH_SRC + ')');
 DG.smooth = function (pts) {
-    var n = pts.length, i, inT = [], outT = [], d = [], m = [];
-    if (n < 3) { return DG.straight(pts); }
-    for (i = 0; i < n - 1; i++) {
-        var dx = pts[i + 1][0] - pts[i][0];
-        d.push(dx === 0 ? 0 : (pts[i + 1][1] - pts[i][1]) / dx);
-    }
-    m.push(d[0]);
-    for (i = 1; i < n - 1; i++) { m.push(d[i - 1] * d[i] <= 0 ? 0 : (d[i - 1] + d[i]) / 2); }
-    m.push(d[n - 2]);
-    for (i = 0; i < n - 1; i++) {
-        if (d[i] === 0) { m[i] = 0; m[i + 1] = 0; continue; }
-        var a = m[i] / d[i], b = m[i + 1] / d[i], s = a * a + b * b;
-        if (s > 9) { var tt = 3 / Math.sqrt(s); m[i] = tt * a * d[i]; m[i + 1] = tt * b * d[i]; }
-    }
-    for (i = 0; i < n; i++) {
-        var dl = i > 0 ? (pts[i][0] - pts[i - 1][0]) / 3 : 0;
-        var dr = i < n - 1 ? (pts[i + 1][0] - pts[i][0]) / 3 : 0;
-        inT.push([-dl, -m[i] * dl]);
-        outT.push([dr, m[i] * dr]);
-    }
-    return { pts: pts, inT: inT, outT: outT };
+    var t = DG.smoothTan(pts);
+    return { pts: pts, inT: t.i, outT: t.o };
 };
 DG.bezPt = function (p0, c0, c1, p1, t) {
     var mt = 1 - t;

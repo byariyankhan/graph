@@ -28,7 +28,7 @@ Plan, roadmap and chart catalogue (Bengali): **[PLAN.md](PLAN.md)**
   - plain keyframes with matching easing
   - every count-up is a `Progress` slider plus an expression (FROM/TO at the top)
   - everything is parented to a `DG Controller` null, so you can move or scale the whole chart at once
-- **Live data in AE:** every value becomes a slider on `DG Controller`. When you change a slider, the bars, slices, labels and axis redraw through expressions. This works for bar (column / horizontal / grouped), pie / donut / half donut / rings, and big numbers. `Axis Max (0 = auto)` lets you fix the axis.
+- **Live data in AE:** every value becomes a slider on `DG Controller`. When you change a slider, the bars, slices, labels and axis redraw through expressions. This works for bar (column / horizontal / grouped), line (line / smooth / stepped / area, including the tip dot and its live label), pie / donut / half donut / rings, and big numbers. `Axis Max (0 = auto)` lets you fix the axis.
 - **Re-edit:** open a DocuGraph comp, then click **Load from open comp**. Change anything, then click **Update open comp**. The comp keeps its name and stays in place inside parent comps, and any layers you added yourself are kept.
 - **Motion Bro-style workflow:**
   - **Gallery** of animated thumbnails: hover to play, click to use.
