@@ -134,16 +134,16 @@ for (const type of Object.keys(DG.VARIANTS)) {
         }
     }
 }
-// Bangla + expression evaluation: the count-up expression prints the same as the preview
+// expression evaluation: the static count-up expression prints the same as the preview
 {
     const ae = makeAE(), sb = hostSandbox(ae);
     sb.DGHost.init(EXT);
-    const spec = Object.assign({}, DG.sample('counter', 'single'), { type: 'counter', variant: 'single', options: { live: false }, format: { digits: 'bn', grouping: 'indian' } });
+    const spec = Object.assign({}, DG.sample('counter', 'single'), { type: 'counter', variant: 'single', options: { live: false }, format: { prefix: '$' } });
     sb.DGHost.build(JSON.stringify(spec));
     const ex = ae.log.exprs.find(e => e.indexOf('FROM') >= 0);
     // eslint-disable-next-line no-new-func
     const out = new Function('effect', 'return eval(' + JSON.stringify(ex) + ')')(() => () => 100);
-    try { assert.strictEqual(out, '১৭,৩০,০০,০০০'); passed++; } catch (e) { fail++; console.error('FAIL expression value', e.message); }
+    try { assert.strictEqual(out, '$173,000,000'); passed++; } catch (e) { fail++; console.error('FAIL expression value', e.message); }
 }
 /* Evaluate live expressions with the slider values: must match the preview. */
 function evalExpr(ex, sliders, progress) {

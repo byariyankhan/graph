@@ -108,11 +108,9 @@ DG.finalize = function (ctx) {
         if (el.type !== 'text') { continue; }
         var sample = el.text;
         if (el.count) { sample = DG.fmt(el.count.to, el.count.fmt); }
-        var bn = DG.hasBn(sample) || DG.hasBn(el.text);
-        var role = el.font || 'body';
-        var f = bn ? (role === 'body' ? th.fonts.bnBody : th.fonts.bnBold) : (th.fonts[role] || th.fonts.body);
+        var f = th.fonts[el.font || 'body'] || th.fonts.body;
         el.fontAE = f.ae; el.fontCSS = f.css; el.weight = f.w;
-        if (el.upper && !bn) { el.text = String(el.text).toUpperCase(); }
+        if (el.upper) { el.text = String(el.text).toUpperCase(); }
         if (el.count) { el.text = sample; }
     }
 };

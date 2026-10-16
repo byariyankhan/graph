@@ -66,7 +66,6 @@
                 <div class="row">
                     <button id="aiCopy" class="ghost wide">① Copy prompt → paste into ChatGPT / Claude</button>
                 </div>
-                <label class="mini"><input type="checkbox" id="aiBn"> Labels &amp; title in বাংলা</label>
                 <textarea id="aiPaste" rows="3" placeholder="② Paste the AI's whole answer here — table, title and source fill in automatically"></textarea>
                 <details class="aidirect">
                     <summary>Or ask Claude directly (your API key, searches the web)</summary>
@@ -122,11 +121,6 @@
                 <input id="fTitle" placeholder="Title e.g. Montserrat-Bold">
                 <input id="fBody" placeholder="Body e.g. Inter-Regular">
             </div>
-            <div class="row">
-                <input id="fBnBold" placeholder="Bangla bold e.g. HindSiliguri-Bold">
-                <input id="fBnBody" placeholder="Bangla body e.g. HindSiliguri-Regular">
-            </div>
-            <p class="hint">Bangla text switches to the Bangla font automatically. In AE set Preferences → Type → <b>South Asian and Middle Eastern</b> engine for correct conjuncts.</p>
         </div>
 
         <!-- TEXT -->
@@ -139,14 +133,13 @@
             </div>
             <label class="lbl">Number format</label>
             <div class="row">
-                <input id="prefix" placeholder="Prefix ($, ৳)">
+                <input id="prefix" placeholder="Prefix ($, €)">
                 <input id="suffix" placeholder="Suffix (%, M)">
                 <input id="decimals" type="number" min="0" max="4" placeholder="Decimals">
             </div>
             <div class="row">
-                <select id="grouping"><option value="intl">1,234,567</option><option value="indian">12,34,567 (lakh/crore)</option><option value="none">1234567</option></select>
-                <select id="digits"><option value="latin">0123 digits</option><option value="bn">০১২৩ Bangla digits</option></select>
-                <select id="compact"><option value="none">Full number</option><option value="en">K / M / B</option><option value="words">million / billion</option><option value="bn">হাজার / লাখ / কোটি</option></select>
+                <select id="grouping"><option value="intl">1,234,567</option><option value="none">1234567</option></select>
+                <select id="compact"><option value="none">Full number</option><option value="en">K / M / B</option><option value="words">million / billion</option></select>
             </div>
             <p class="hint" id="fmtDemo"></p>
         </div>

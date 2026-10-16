@@ -77,7 +77,7 @@ DGHost.readActive = function () {
         var c = DGHost.target();
         if (!c) { return 'NONE|'; }
         var body = String(c.comment).substring(String(c.comment).indexOf('\n') + 1), out = '', i, ch, h;
-        /* escape non-ASCII so Bangla survives the trip back to the panel */
+        /* escape non-ASCII (é, —, °) so it survives the trip back to the panel */
         for (i = 0; i < body.length; i++) {
             ch = body.charCodeAt(i);
             if (ch > 126) { h = ch.toString(16); while (h.length < 4) { h = '0' + h; } out += '\\u' + h; } else { out += body.charAt(i); }

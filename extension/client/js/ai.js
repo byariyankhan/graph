@@ -45,7 +45,7 @@
             '- Use reliable, citable sources (World Bank, IMF, UN, WHO, national statistics offices, etc.). Prefer one consistent source for the whole table.',
             '- Never guess or invent numbers. If a value is unknown, leave the cell empty.',
             '- Numbers only in data cells: plain digits with a decimal point if needed, no thousands separators, no units, no currency signs (put units in the subtitle).',
-            '- Keep labels short.' + (o.bangla ? ' Write the labels, title and subtitle in Bangla (বাংলা); keep the numbers in English digits.' : ''),
+            '- Keep labels short and in English.',
             '',
             'Answer in exactly this format:',
             'Title: <short headline, max 6 words>',
@@ -108,7 +108,7 @@
         text = String(text || '').replace(/\r\n?/g, '\n');
         if (!trim(text)) { return null; }
         var out = { title: '', subtitle: '', source: '', notes: '' };
-        var meta = { title: /^(?:#+\s*)?\**\s*(title|শিরোনাম)\s*\**\s*[:：]\s*(.+)$/i, subtitle: /^\**\s*(subtitle|subheading|উপশিরোনাম)\s*\**\s*[:：]\s*(.+)$/i, source: /^\**\s*(sources?|সূত্র|উৎস)\s*\**\s*[:：]\s*(.+)$/i, notes: /^\**\s*(notes?|নোট)\s*\**\s*[:：]\s*(.+)$/i };
+        var meta = { title: /^(?:#+\s*)?\**\s*(title)\s*\**\s*[:：]\s*(.+)$/i, subtitle: /^\**\s*(subtitle|subheading)\s*\**\s*[:：]\s*(.+)$/i, source: /^\**\s*(sources?)\s*\**\s*[:：]\s*(.+)$/i, notes: /^\**\s*(notes?)\s*\**\s*[:：]\s*(.+)$/i };
         var body = [];
         text.split('\n').forEach(function (l) {
             var hit = false;
@@ -118,7 +118,7 @@
             });
             if (!hit) { body.push(l); }
         });
-        if (out.source && !/^source/i.test(out.source) && !/^সূত্র/.test(out.source)) { out.source = (/[\u0980-\u09FF]/.test(out.source) ? 'সূত্র: ' : 'Source: ') + out.source; }
+        if (out.source && !/^source/i.test(out.source)) { out.source = 'Source: ' + out.source; }
         var rest = body.join('\n'), rows = null;
 
         /* 1. fenced code blocks */

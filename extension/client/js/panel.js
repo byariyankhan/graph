@@ -23,8 +23,8 @@
         title: '', subtitle: '', source: '', credit: '', data: '',
         options: { highlight: '', sort: 'none', colorBy: 'single', values: true, grid: true, axis: true, endLabels: true, live: true },
         dataMode: 'table', insert: true,
-        format: { prefix: '', suffix: '', decimals: '', grouping: 'intl', digits: 'latin', compact: 'none' },
-        style: { hiOn: false, hi: '#E8B04B', fTitle: '', fBody: '', fBnBold: '', fBnBody: '' },
+        format: { prefix: '', suffix: '', decimals: '', grouping: 'intl', compact: 'none' },
+        style: { hiOn: false, hi: '#E8B04B', fTitle: '', fBody: '' },
         anim: { speed: 1, stagger: 0.12, ease: 'out', titleAnim: 'fade', overshoot: true },
         background: 'solid'
     };
@@ -43,10 +43,7 @@
         state.options.highlight = (s.options && s.options.highlight) || '';
         state.options.sort = (s.options && s.options.sort) || 'none';
         state.options.periodSec = (s.options && s.options.periodSec) || (state.type === 'scatter' ? 1.5 : 1);
-        /* keep the user's language choices (digits) across samples */
-        var digits = state.format && state.format.digits;
         state.format = Object.assign({}, DEFAULT.format, s.format || {});
-        if (digits) { state.format.digits = digits; }
     }
 
     /* ------------------------------------------------------------ spec */
@@ -54,8 +51,6 @@
         var wh = state.size.split('x').map(Number), st = state.style, fonts = {};
         if (st.fTitle) { fonts.title = st.fTitle; fonts.num = st.fTitle; }
         if (st.fBody) { fonts.body = st.fBody; }
-        if (st.fBnBold) { fonts.bnBold = st.fBnBold; }
-        if (st.fBnBody) { fonts.bnBody = st.fBnBody; }
         var f = Object.assign({}, state.format);
         if (f.decimals === '' || f.decimals === null) { delete f.decimals; } else { f.decimals = Number(f.decimals); }
         return {
@@ -150,9 +145,9 @@
         size: 'size', fps: 'fps', data: 'data', highlight: 'options.highlight', sort: 'options.sort', colorBy: 'options.colorBy',
         values: 'options.values', grid: 'options.grid', axis: 'options.axis', endLabels: 'options.endLabels', live: 'options.live', periodSec: 'options.periodSec',
         hi: 'style.hi', hiOn: 'style.hiOn', background: 'background', fTitle: 'style.fTitle', fBody: 'style.fBody',
-        fBnBold: 'style.fBnBold', fBnBody: 'style.fBnBody', title: 'title', subtitle: 'subtitle', source: 'source', credit: 'credit',
+title: 'title', subtitle: 'subtitle', source: 'source', credit: 'credit',
         prefix: 'format.prefix', suffix: 'format.suffix', decimals: 'format.decimals', grouping: 'format.grouping',
-        digits: 'format.digits', compact: 'format.compact', speed: 'anim.speed', stagger: 'anim.stagger', ease: 'anim.ease',
+        compact: 'format.compact', speed: 'anim.speed', stagger: 'anim.stagger', ease: 'anim.ease',
         titleAnim: 'anim.titleAnim', duration: 'duration', overshoot: 'anim.overshoot', insert: 'insert'
     };
     function getPath(p) { return p.split('.').reduce(function (o, k) { return o == null ? o : o[k]; }, state); }
@@ -363,7 +358,7 @@
         var smp = DG.sample(state.type, state.variant);
         return DGAI.buildPrompt({
             ask: $('aiAsk').value, type: state.type, variant: state.variant, typeLabel: ty.label, variantLabel: va.label,
-            bangla: $('aiBn').checked, example: smp ? smp.data.split('\n').slice(0, 3).join('\n') : ''
+            example: smp ? smp.data.split('\n').slice(0, 3).join('\n') : ''
         });
     }
     function importAI(text) {

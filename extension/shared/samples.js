@@ -49,7 +49,7 @@ DG.SAMPLES = {
     'counter': {
         title: 'A nation that doubled', subtitle: 'Population of Bangladesh', source: 'Source: sample data',
         data: 'Label\tValue\tStart\nPeople living in Bangladesh today\t173000000\t75000000',
-        options: {}, format: { grouping: 'indian' }
+        options: {}, format: {}
     },
     'counter:compare': {
         title: 'Two megacities', subtitle: 'Metro population (rounded)', source: 'Source: sample data',

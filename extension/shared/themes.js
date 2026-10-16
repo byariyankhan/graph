@@ -1,9 +1,7 @@
 /*
  * DocuGraph — style themes. Every chart type × every variant works with
  * every theme. Fonts carry both the After Effects PostScript name (`ae`) and
- * a CSS family for the panel preview (`css`). Bengali text automatically
- * switches to the `bnBold` / `bnBody` fonts (needs a Bangla font installed —
- * e.g. Nirmala UI on Windows, or Hind Siliguri / Noto Sans Bengali).
+ * a CSS family for the panel preview (`css`).
  */
 var DG = (typeof DG !== 'undefined') ? DG : {};
 
@@ -11,12 +9,10 @@ var DG = (typeof DG !== 'undefined') ? DG : {};
     var SANS = 'Arial, Helvetica, sans-serif';
     var SERIF = 'Georgia, "Times New Roman", serif';
     var MONO = '"Courier New", Courier, monospace';
-    var BN = '"Hind Siliguri", "Noto Sans Bengali", "Nirmala UI", "Vrinda", sans-serif';
 
     function f(ae, css, w) { return { ae: ae, css: css, w: w || 400 }; }
     var arial = {
-        title: f('Arial-BoldMT', SANS, 700), body: f('ArialMT', SANS, 400), num: f('Arial-BoldMT', SANS, 700),
-        bnBold: f('NirmalaUI-Bold', BN, 700), bnBody: f('NirmalaUI', BN, 400)
+        title: f('Arial-BoldMT', SANS, 700), body: f('ArialMT', SANS, 400), num: f('Arial-BoldMT', SANS, 700)
     };
     function fonts(over) { return DG.extend({}, arial, over || {}); }
 

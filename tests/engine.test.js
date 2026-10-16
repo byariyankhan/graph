@@ -11,15 +11,12 @@ function t(name, fn) {
 }
 
 t('fmt intl grouping', () => assert.strictEqual(DG.fmt(1234567.891, { decimals: 2 }), '1,234,567.89'));
-t('fmt indian grouping', () => assert.strictEqual(DG.fmt(173000000, { grouping: 'indian' }), '17,30,00,000'));
-t('fmt bengali digits', () => assert.strictEqual(DG.fmt(1971, { grouping: 'none', digits: 'bn' }), '১৯৭১'));
 t('fmt compact en', () => assert.strictEqual(DG.fmt(4.6e11, { compact: 'en', decimals: 1, prefix: '$' }), '$460.0B'));
 t('fmt compact words', () => assert.strictEqual(DG.fmt(23.9e6, { compact: 'words', decimals: 1 }), '23.9 million'));
-t('fmt compact bn crore', () => assert.strictEqual(DG.fmt(17.3e7, { compact: 'bn', decimals: 1 }), '17.3 কোটি'));
 t('fmt ref keeps unit', () => assert.strictEqual(DG.fmt(500, { compact: 'en', ref: 2e6, decimals: 3 }), '0.001M'));
 t('fmt negative', () => assert.strictEqual(DG.fmt(-1500, { prefix: '$' }), '-$1,500'));
 t('fmt no negative zero', () => assert.strictEqual(DG.fmt(-0.001, {}), '0'));
-t('num parses bengali + currency', () => assert.strictEqual(DG.num('৳ ১,২৩৪'), 1234));
+t('num parses currency + separators', () => assert.strictEqual(DG.num('$ 1,234'), 1234));
 t('num suffix', () => assert.strictEqual(DG.num('4.6B'), 4.6e9));
 t('num percent / parens', () => { assert.strictEqual(DG.num('12%'), 12); assert.strictEqual(DG.num('(5)'), -5); });
 t('parse TSV with header', () => {
@@ -50,13 +47,13 @@ t('overshoot peaks then settles', () => {
     assert.strictEqual(DG.animF(a, 1), 1);
 });
 t('toJSON roundtrip with unicode', () => {
-    const o = { a: [1, 2.5, null], s: 'Dhaka "ঢাকা"\n', b: true };
+    const o = { a: [1, 2.5, null], s: 'Dhaka "Caf\u00e9 \u2014 30\u00b0"\n', b: true };
     assert.deepStrictEqual(JSON.parse(DG.toJSON(o)), o);
 });
 t('FMT_SRC is self-contained (expression-safe)', () => {
     // eslint-disable-next-line no-new-func
     const f = new Function('return (' + DG.FMT_SRC + ')')();
-    assert.strictEqual(f(1234.5, { decimals: 1, digits: 'bn' }), '১,২৩৪.৫');
+    assert.strictEqual(f(1234.5, { decimals: 1, prefix: '$' }), '$1,234.5');
 });
 
 const TYPES = Object.keys(DG.VARIANTS);
@@ -96,7 +93,7 @@ for (const type of TYPES) {
 t('count text ends at exact final value', () => {
     const sc = DG.build(Object.assign({}, DG.sample('counter', 'single'), { type: 'counter', variant: 'single' }));
     const big = sc.els.find(e => e.name === 'Big Number');
-    assert.strictEqual(S.DGPreview.textString(big, sc.duration), DG.fmt(173000000, { grouping: 'indian', ref: 173000000 }));
+    assert.strictEqual(S.DGPreview.textString(big, sc.duration), '173,000,000');
 });
 t('follow dot reaches last vertex', () => {
     const sc = DG.build(Object.assign({}, DG.sample('line', 'line'), { type: 'line', variant: 'line' }));

@@ -79,7 +79,7 @@ DG.charts.race = function (ctx) {
     var ys = (cols ? 110 : 150) * u;
     /* the period label steps (1990 → 2000 …) rather than counting */
     var plabels = [];
-    for (i = 0; i < m; i++) { plabels.push(yearNumeric ? DG.fmt(yv[i], { grouping: 'none', decimals: 0, digits: ctx.fmt.digits }) : data.cats[i]); }
+    for (i = 0; i < m; i++) { plabels.push(yearNumeric ? DG.fmt(yv[i], { grouping: 'none', decimals: 0}) : data.cats[i]); }
     var yearA = ctx.A('live', tRace, (m - 1) * D, { times: pt.concat([pt[m - 1] + 0.001]), vals: DG.range(m).concat([m - 1]), labels: plabels });
 
     if (!cols) {

@@ -56,11 +56,9 @@ const rowsOf = (r) => r.data.split('\n').map(l => l.split('\t'));
         const r = AI.smartParse('{"data": [["Year","A"],[1990,5],[2000,7]]}');
         assert.strictEqual(r.rows, 2);
     });
-    await t('Bangla meta labels + footnote marks + bold cells', () => {
-        const r = AI.smartParse('শিরোনাম: জনসংখ্যা\nসূত্র: বিবিএস\n| দেশ | জনসংখ্যা |\n|---|---|\n| **বাংলাদেশ** | 173[1] |\n| নেপাল | 30 |');
-        assert.strictEqual(r.title, 'জনসংখ্যা');
-        assert.strictEqual(r.source, 'সূত্র: বিবিএস');
-        assert.deepStrictEqual(rowsOf(r)[1], ['বাংলাদেশ', '173']);
+    await t('footnote marks + bold cells are cleaned', () => {
+        const r = AI.smartParse('Title: Population\n| Country | People (M) |\n|---|---|\n| **Bangladesh** | 173[1] |\n| Nepal | 30 |');
+        assert.deepStrictEqual(rowsOf(r)[1], ['Bangladesh', '173']);
     });
     await t('prose only → null', () => { assert.strictEqual(AI.smartParse('Sorry, I could not find reliable data.'), null); });
     await t('every chart type has a table-shape instruction', () => {
@@ -71,9 +69,6 @@ const rowsOf = (r) => r.data.split('\n').map(l => l.split('\t'));
                 assert.ok(/Never guess/.test(p) && /```tsv/.test(p) && /Source:/.test(p));
             }
         }
-    });
-    await t('prompt asks for Bangla labels when ticked', () => {
-        assert.ok(/বাংলা/.test(AI.buildPrompt({ ask: 'x', type: 'bar', variant: 'column', typeLabel: 'Bar', variantLabel: 'Column', bangla: true })));
     });
 
     /* ---- direct Claude call with a fake SDK ---- */

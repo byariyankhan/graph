@@ -46,7 +46,6 @@ DG.inList = function (label, list) {
     for (var i = 0; i < parts.length; i++) { if (DG.norm(parts[i]) === l && l !== '') { return true; } }
     return false;
 };
-DG.hasBn = function (s) { return /[ঀ-৿]/.test(String(s)); };
 
 /* ----------------------------------------------------------------- colors */
 
@@ -74,12 +73,10 @@ DG.luma = function (hex) { var c = DG.hexToRgb(hex); return 0.2126 * c[0] + 0.71
  * Kept as SOURCE TEXT so the identical function can be embedded inside
  * After Effects expressions (count-up labels) and also eval'd here. One
  * implementation => preview and render always print the same string.
- *   o.prefix / o.suffix   "$", "%", " কোটি" ...
+ *   o.prefix / o.suffix   "$", "%", " million" ...
  *   o.decimals            fixed decimals
- *   o.grouping            "intl" 1,234,567 | "indian" 12,34,567 | "none"
- *   o.digits              "latin" | "bn" (০১২৩৪৫৬৭৮৯)
+ *   o.grouping            "intl" 1,234,567 | "none"
  *   o.compact             "none" | "en" (K/M/B/T) | "words" (million/billion)
- *                         | "bn" (হাজার/লাখ/কোটি)
  *   o.ref                 value used to choose the compact unit (so a
  *                         count-up keeps one unit the whole time)
  */
@@ -92,15 +89,12 @@ DG.FMT_SRC = [
     'var ref=Math.abs((o.ref===undefined||o.ref===null)?v:o.ref);',
     'if(o.compact==="en")U=[[1e12,"T"],[1e9,"B"],[1e6,"M"],[1e3,"K"]];',
     'else if(o.compact==="words")U=[[1e12," trillion"],[1e9," billion"],[1e6," million"]];',
-    'else if(o.compact==="bn")U=[[1e7," \\u0995\\u09cb\\u099f\\u09bf"],[1e5," \\u09b2\\u09be\\u0996"],[1e3," \\u09b9\\u09be\\u099c\\u09be\\u09b0"]];',
     'if(U){for(i=0;i<U.length;i++){if(ref>=U[i][0]){v=v/U[i][0];unit=U[i][1];break;}}}',
     'var s=v.toFixed(d);var p=s.indexOf(".");var ip=p<0?s:s.substring(0,p);var fp=p<0?"":s.substring(p);',
     'var g=o.grouping||"intl";',
     'if(g==="intl"){ip=ip.replace(/\\B(?=(\\d{3})+(?!\\d))/g,",");}',
-    'else if(g==="indian"&&ip.length>3){var r=ip.substring(0,ip.length-3);ip=r.replace(/\\B(?=(\\d{2})+(?!\\d))/g,",")+","+ip.substring(ip.length-3);}',
     'if(neg&&Number(s)===0)neg=false;',
     'var out=(neg?"-":"")+(o.prefix||"")+ip+fp+unit+(o.suffix||"");',
-    'if(o.digits==="bn"){var t="",c;for(i=0;i<out.length;i++){c=out.charCodeAt(i);t+=(c>=48&&c<=57)?String.fromCharCode(2534+c-48):out.charAt(i);}out=t;}',
     'return out;}'
 ].join('');
 DG.fmt = eval('(' + DG.FMT_SRC + ')');
@@ -108,7 +102,7 @@ DG.fmt = eval('(' + DG.FMT_SRC + ')');
 /* Divisor that the compact mode will use for a reference value. */
 DG.compactDiv = function (ref, compact) {
     var U = compact === 'en' || compact === 'words' ? [1e12, 1e9, 1e6, compact === 'en' ? 1e3 : 1e99]
-        : compact === 'bn' ? [1e7, 1e5, 1e3] : [];
+        : [];
     ref = Math.abs(ref);
     for (var i = 0; i < U.length; i++) { if (ref >= U[i]) { return U[i]; } }
     return 1;
@@ -200,11 +194,7 @@ DG.liveText = function (a, t) {
 DG.num = function (s) {
     if (s === null || s === undefined) { return NaN; }
     if (typeof s === 'number') { return s; }
-    var t = '', i, c, str = DG.trim(s);
-    for (i = 0; i < str.length; i++) {
-        c = str.charCodeAt(i);
-        t += (c >= 0x09E6 && c <= 0x09EF) ? String.fromCharCode(48 + c - 0x09E6) : str.charAt(i);
-    }
+    var t = DG.trim(s);
     var neg = /^\(.*\)$/.test(t);
     t = t.replace(/[\s,()$€£৳₹¥%]/g, '').replace(/^−/, '-');
     var mult = 1, m = /([kmbt])$/i.exec(t);
@@ -336,7 +326,7 @@ DG.liveTicks = function (max) {
     return { min: 0, max: M, step: st, ticks: [0, st, st * 2, st * 3, M], decimals: dec };
 };
 
-/* Number format for axis ticks: same units/digits as the data, sensible decimals. */
+/* Number format for axis ticks: same units as the data, sensible decimals. */
 DG.tickFmt = function (F, tk) {
     var div = DG.compactDiv(Math.max(Math.abs(tk.max), Math.abs(tk.min)), F.compact);
     var dec = Math.max(0, -Math.floor(Math.log(tk.step / div) / Math.LN10 + 1e-9));

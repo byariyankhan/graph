@@ -165,7 +165,7 @@ DG.charts.scatter = function (ctx) {
     var yearNumeric = true;
     for (k = 0; k < nT; k++) { if (isNaN(DG.num(times[k]))) { yearNumeric = false; } }
     var plabels = [];
-    for (k = 0; k < nT; k++) { plabels.push(yearNumeric ? DG.fmt(DG.num(times[k]), { grouping: 'none', decimals: 0, digits: ctx.fmt.digits }) : times[k]); }
+    for (k = 0; k < nT; k++) { plabels.push(yearNumeric ? DG.fmt(DG.num(times[k]), { grouping: 'none', decimals: 0}) : times[k]); }
     ctx.text('Period', plabels[nT - 1], px + pw - 20 * u, py + ph - 30 * u, 200 * u, {
         align: 'right', font: 'num', color: th.grid, anim: [
             ctx.A('live', kt[0], span, { times: kt.concat([kt[nT - 1] + 0.001]), vals: DG.range(nT).concat([nT - 1]), labels: plabels }),

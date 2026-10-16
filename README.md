@@ -3,7 +3,7 @@
 A CEP panel for Adobe After Effects that builds **documentary-grade animated charts** as
 **native, editable layers**. You paste data, pick a type and theme, and click once to get a finished comp.
 
-Plan, roadmap and chart catalogue (Bengali): **[PLAN.md](PLAN.md)**
+Plan, roadmap and chart catalogue: **[PLAN.md](PLAN.md)**
 
 ![All 24 variants, Documentary Dark](docs/img/sheet-docDark-end-1920x1080.jpg)
 
@@ -18,11 +18,6 @@ Plan, roadmap and chart catalogue (Bengali): **[PLAN.md](PLAN.md)**
   - line-tip dot with a live value label
   - timeline markers that pop when the line reaches them
   - era/dynasty spans
-- **Bengali support:**
-  - Bengali labels with automatic Bengali font switching
-  - Bengali digits (০১২৩)
-  - lakh/crore grouping (12,34,567)
-  - the compact suffixes হাজার / লাখ / কোটি
 - **Editable output:**
   - shape layers and text layers
   - plain keyframes with matching easing
@@ -47,7 +42,6 @@ Plan, roadmap and chart catalogue (Bengali): **[PLAN.md](PLAN.md)**
    - It copies `extension/` into the CEP extensions folder.
    - It enables unsigned extensions (`PlayerDebugMode`).
 2. Restart After Effects and open **Window → Extensions → DocuGraph**.
-3. For Bengali text, set **Preferences → Type → Text Engine: South Asian and Middle Eastern** so conjuncts render correctly. You also need a Bengali font installed, such as Hind Siliguri, Noto Sans Bengali or Nirmala UI.
 
 To try the UI without AE, open `extension/client/index.html` in a browser. Preview works there, and "Create" is disabled.
 
@@ -63,7 +57,7 @@ Paste data from Excel or Google Sheets (tab-separated) or as CSV. The first row 
 | Timeline | date, title, [note]. For the eras variant: start, end, label |
 | Pyramid | group, left value, right value |
 
-Numbers can use Bengali digits, currency symbols, `%`, thousands separators or `K/M/B/T` suffixes.
+Numbers can use currency symbols, `%`, thousands separators or `K/M/B/T` suffixes.
 
 ## Development
 
