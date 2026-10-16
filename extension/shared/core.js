@@ -235,12 +235,24 @@ DG.parseTable = function (text) {
     for (i = 0; i < raw.length; i++) { while (raw[i].length < width) { raw[i].push(''); } }
     var headerRow = true;
     for (j = 0; j < width; j++) { if (raw[0][j] !== '' && DG.isNum(raw[0][j])) { headerRow = false; } }
+    /* "Country, 1990, 2020": a text first cell followed only by years is a
+     * header too — unless the data rows are also just years. */
+    if (!headerRow && raw.length > 1 && raw[0][0] !== '' && !DG.isNum(raw[0][0]) && DG.isYearRow(raw[0]) && !DG.isYearRow(raw[1])) { headerRow = true; }
     if (raw.length === 1) { headerRow = false; }
     var headers = [];
     if (headerRow) { headers = raw.shift(); } else {
         for (j = 0; j < width; j++) { headers.push(j === 0 ? 'Label' : 'Series ' + j); }
     }
     return { headers: headers, rows: raw };
+};
+DG.isYearRow = function (row) {
+    var n = 0;
+    for (var j = 1; j < row.length; j++) {
+        if (row[j] === '') { continue; }
+        if (!/^(1[0-9]{3}|20[0-9]{2}|21[0-9]{2})$/.test(DG.trim(row[j]))) { return false; }
+        n++;
+    }
+    return n > 0;
 };
 DG.splitRow = function (line, delim) {
     var out = [], cur = '', q = false, i, ch;

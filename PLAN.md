@@ -39,7 +39,7 @@
 | 7 | **Bar Chart Race** ✅ | Horizontal race ✅ · Column race ✅ · Line race (৩) |
 | 8 | **Scatter / Bubble** ✅ | Scatter ✅ · Bubble ✅ · Gapminder (সময়ের সাথে চলমান) ✅ (৩) |
 | 9 | **Pictogram / Waffle** ✅ | Waffle 10×10 ✅ · Icon array (মানুষ আইকন) ✅ · Proportional circles ✅ (৩) |
-| 10 | **Comparison** | Dumbbell · Slope · Waterfall · Before/After (৪) |
+| 10 | **Comparison** ✅ | Slope ✅ · Dumbbell ✅ · Waterfall ✅ · Gains & losses (+/−) ✅ (৪) |
 | 11 | **Gauge / Meter** | Semi gauge · Thermometer · Progress bar (৩) |
 
 এছাড়া ধাপ ২-এ: লাইন চার্টে **অ্যানোটেশন** ("১৯৭১ – মুক্তিযুদ্ধ" উল্লম্ব মার্কার), থিম এডিটর ও নিজস্ব থিম সেভ, কম্প থেকে চার্ট আবার খুলে এডিট (re-edit), CSV/Excel ফাইল ইমপোর্ট।
@@ -124,6 +124,7 @@ tests/                     ইঞ্জিন টেস্ট, ES3 লিন্�
 - [x] লাইভ ডেটা: Line (line / smooth / stepped / area) — লাইন, পয়েন্ট, চলমান ডট, শেষের লেবেল সব স্লাইডারে চলে
 - [x] Scatter / Bubble / Gapminder (log scale অটো, গ্রুপ রঙ, হাইলাইট)
 - [x] Waffle / People icons / Proportional circles
+- [x] Comparison: Slope / Dumbbell / Waterfall / Gains & losses
 - [ ] লাইভ ডেটা: Stacked, Timeline, Pyramid, Race, Scatter
 - [ ] Essential Properties-এ ফন্ট বদল (AE 2024+ API যাচাই সাপেক্ষে)
 - [ ] ধাপ ২ বাকি: Scatter/Bubble, Waffle, Comparison, Gauge, অ্যানোটেশন, re-edit

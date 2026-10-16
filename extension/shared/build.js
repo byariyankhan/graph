@@ -88,6 +88,7 @@ DG.liveInfo = function (cells) {
 DG.colorRoles = function (th) {
     var r = [['Highlight', th.hi], ['Accent', th.accent], ['Text', th.text], ['Muted Text', th.muted]], i;
     for (i = 0; i < th.palette.length; i++) { r.push(['Color ' + (i + 1), th.palette[i]]); }
+    r.push(['Up / Gain', th.up], ['Down / Loss', th.down]);
     r.push(['Dimmed', th.dim], ['Grid', th.grid], ['Axis', th.axis], ['Card', th.card], ['Background', th.bg]);
     if (th.bg2) { r.push(['Background Glow', th.bg2]); }
     r.push(['Light Labels', '#FFFFFF'], ['Dark Labels', '#111111'], ['Year Labels', '#E6E6E6'], ['Year Labels Dark', '#333333']);

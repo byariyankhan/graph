@@ -160,6 +160,26 @@ DG.SAMPLES = {
         data: 'Country\tArea\nIndia\t3287\nPakistan\t881\nMyanmar\t677\nNepal\t147\nBangladesh\t148\nSri Lanka\t66',
         options: { highlight: 'Bangladesh' }, format: { suffix: 'K km\u00b2' }
     },
+    'compare': {
+        title: 'Living longer', subtitle: 'Life expectancy at birth, years (rounded, illustrative)', source: 'Source: World Bank (sample)',
+        data: 'Country\t1990\t2020\nBangladesh\t58\t72\nIndia\t58\t70\nPakistan\t60\t66\nNepal\t54\t70\nSri Lanka\t69\t76',
+        options: { highlight: '' }, format: {}
+    },
+    'compare:dumbbell': {
+        title: 'Thirty years of gains', subtitle: 'Life expectancy at birth, years (rounded, illustrative)', source: 'Source: World Bank (sample)',
+        data: 'Country\t1990\t2020\nBangladesh\t58\t72\nIndia\t58\t70\nPakistan\t60\t66\nNepal\t54\t70\nSri Lanka\t69\t76',
+        options: { highlight: 'Bangladesh' }, format: {}
+    },
+    'compare:waterfall': {
+        title: 'How the population grew', subtitle: 'Million people, 2000 \u2192 2020 (illustrative)', source: 'Source: sample data',
+        data: 'Step\tMillion\n2000\t129\nBirths\t60\nDeaths\t-17\nMigration\t-5',
+        options: { totalLabel: '2020' }, format: { suffix: 'M' }
+    },
+    'compare:diverging': {
+        title: 'Winners and losers', subtitle: 'Economic growth in one year, % (illustrative)', source: 'Source: sample data',
+        data: 'Country\tGrowth %\nIndia\t8.2\nBangladesh\t5.8\nBhutan\t4.6\nNepal\t1.9\nPakistan\t-0.2\nSri Lanka\t-2.3',
+        options: { highlight: '' }, format: { suffix: '%', decimals: 1 }
+    },
     'pyramid': {
         title: 'A young nation', subtitle: 'Population by age, % of total (illustrative)', source: 'Source: sample data',
         data: 'Age\tMale\tFemale\n0-9\t9.1\t8.8\n10-19\t9.4\t9.2\n20-29\t8.6\t8.9\n30-39\t7.4\t7.6\n40-49\t5.9\t5.8\n50-59\t4.2\t4.1\n60-69\t2.6\t2.7\n70+\t1.6\t1.8',

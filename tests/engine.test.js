@@ -31,6 +31,12 @@ t('parse CSV quoted', () => {
     const tb = DG.parseTable('Name,Value\n"Dhaka, BD",5\n');
     assert.strictEqual(tb.rows[0][0], 'Dhaka, BD');
 });
+t('parse header made of years', () => {
+    const tb = DG.parseTable('Country\t1990\t2020\nBangladesh\t58\t72\nIndia\t58\t70');
+    assert.deepStrictEqual(Array.from(tb.headers), ['Country', '1990', '2020']);
+    assert.strictEqual(tb.rows.length, 2);
+});
+t('parse numeric data first row is not a header', () => assert.strictEqual(DG.parseTable('India\t1441\nChina\t1425').rows.length, 2));
 t('parse headerless', () => assert.strictEqual(DG.parseTable('A,1\nB,2').rows.length, 2));
 t('ticks nice', () => {
     const tk = DG.ticks(0, 1441, 5);

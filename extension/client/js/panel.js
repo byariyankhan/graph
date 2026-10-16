@@ -13,6 +13,7 @@
         { id: 'race', label: 'Bar race', icon: '<rect x="4" y="3" width="34" height="6"/><rect x="4" y="12" width="25" height="6" opacity=".7"/><rect x="4" y="21" width="16" height="6" opacity=".45"/>' },
         { id: 'scatter', label: 'Bubble', icon: '<circle cx="11" cy="20" r="5"/><circle cx="23" cy="12" r="8" opacity=".7"/><circle cx="35" cy="20" r="3.5"/>' },
         { id: 'waffle', label: 'Waffle / icons', icon: '<g>' + [0,1,2,3,4].map(function (r) { return [0,1,2,3,4,5,6].map(function (c) { return '<rect x="' + (4 + c * 5.4) + '" y="' + (2 + r * 5.4) + '" width="4.4" height="4.4"' + (r * 7 + c < 24 ? '' : ' opacity=".3"') + '/>'; }).join(''); }).join('') + '</g>' },
+        { id: 'compare', label: 'Compare', icon: '<line x1="8" y1="24" x2="36" y2="8" stroke-width="2.5"/><line x1="8" y1="10" x2="36" y2="20" stroke-width="2.5" opacity=".5"/><circle cx="8" cy="24" r="3"/><circle cx="36" cy="8" r="3"/><circle cx="8" cy="10" r="3" opacity=".5"/><circle cx="36" cy="20" r="3" opacity=".5"/>' },
         { id: 'pyramid', label: 'Pyramid', icon: '<rect x="8" y="22" width="13" height="5"/><rect x="23" y="22" width="13" height="5"/><rect x="11" y="15" width="10" height="5"/><rect x="23" y="15" width="10" height="5"/><rect x="15" y="8" width="6" height="5"/><rect x="23" y="8" width="6" height="5"/>' }
     ];
 
@@ -127,6 +128,7 @@
             bar: 'label, value[, value…]', line: 'x (year), series…', pie: 'label, value',
             counter: 'label, value[, start value]', timeline: state.variant === 'eras' ? 'start, end, label' : 'date, title[, note]', pyramid: 'group, left, right',
             race: 'year, entity 1, entity 2, … (or entities × years)',
+            compare: state.variant === 'waterfall' ? 'label, value (first row = start total, then +/− changes)' : state.variant === 'diverging' ? 'label, change (+/−)' : 'label, then, now',
             waffle: 'label, value (one row = share of 100; several rows = parts of the whole)',
             scatter: state.variant === 'gapminder' ? 'entity, year, x, y, size[, group]' : state.variant === 'scatter' ? 'label, x, y[, group]' : 'label, x, y, size[, group]'
         };

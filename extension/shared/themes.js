@@ -25,6 +25,7 @@ var DG = (typeof DG !== 'undefined') ? DG : {};
         bg: '#111418', bg2: null, text: '#F2EEE6', muted: '#8A9099', grid: '#2A2F36', axis: '#5A616B',
         accent: '#E8B04B', hi: '#E8B04B', dim: '#3A4049', card: '#1B2027', onColor: '#FFFFFF',
         palette: ['#E8B04B', '#4FA3D9', '#E5654B', '#7CC08A', '#B48CD9', '#F08FB3', '#63C7C0', '#C9C2B0'],
+        up: '#3DAA6E', down: '#E0533D',
         radius: 6, lineW: 6, gridW: 2, gridDash: null, titleSize: 62, upper: false, track: 0,
         titleMark: 'line', glow: false, fonts: fonts()
     };
@@ -40,7 +41,7 @@ var DG = (typeof DG !== 'undefined') ? DG : {};
         }),
         vintage: DG.extend({}, BASE, {
             label: 'Vintage Archive', bg: '#EFE4CC', bg2: '#F7EFDC', text: '#3B2F22', muted: '#7D6A52', grid: '#D6C6A5', axis: '#9C8763',
-            accent: '#9E2B25', hi: '#9E2B25', dim: '#CDBB98', card: '#E6D7B8', radius: 0, gridDash: [6, 6],
+            accent: '#9E2B25', hi: '#9E2B25', dim: '#CDBB98', card: '#E6D7B8', radius: 0, gridDash: [6, 6], up: '#4E6B3A', down: '#9E2B25',
             palette: ['#9E2B25', '#2F4F6F', '#B07D2B', '#4E6B3A', '#6B3F5E', '#8A5A3C', '#5B7C8D', '#A3884F'],
             fonts: fonts({ title: f('Georgia-Bold', SERIF, 700), body: f('Georgia', SERIF, 400), num: f('Georgia-Bold', SERIF, 700) })
         }),
@@ -51,7 +52,7 @@ var DG = (typeof DG !== 'undefined') ? DG : {};
         }),
         neon: DG.extend({}, BASE, {
             label: 'Neon Tech', bg: '#07081A', bg2: '#141A45', text: '#E8F1FF', muted: '#7D88B8', grid: '#1B2150', axis: '#3B4690',
-            accent: '#00F0FF', hi: '#00F0FF', dim: '#232A5C', card: '#0F1433', glow: true, radius: 3,
+            accent: '#00F0FF', hi: '#00F0FF', dim: '#232A5C', card: '#0F1433', glow: true, radius: 3, up: '#B6FF00', down: '#FF2BD6',
             palette: ['#00F0FF', '#FF2BD6', '#B6FF00', '#FFB800', '#7A5CFF', '#00FF9C', '#FF5C5C', '#5CC8FF']
         }),
         blueprint: DG.extend({}, BASE, {
@@ -62,7 +63,7 @@ var DG = (typeof DG !== 'undefined') ? DG : {};
         }),
         mono: DG.extend({}, BASE, {
             label: 'Minimal Mono', bg: '#F7F7F5', text: '#111111', muted: '#8A8A8A', grid: '#E2E2DE', axis: '#B5B5B0',
-            accent: '#FF4F00', hi: '#FF4F00', dim: '#CFCFCB', card: '#EDEDEA', radius: 0, titleMark: null,
+            accent: '#FF4F00', hi: '#FF4F00', dim: '#CFCFCB', card: '#EDEDEA', radius: 0, titleMark: null, up: '#111111', down: '#FF4F00',
             palette: ['#111111', '#555555', '#8A8A8A', '#B5B5B5', '#333333', '#777777', '#A0A0A0', '#CCCCCC']
         }),
         pop: DG.extend({}, BASE, {
