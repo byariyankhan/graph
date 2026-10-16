@@ -90,3 +90,9 @@ input[type=range] { padding: 0; accent-color: var(--accent); border: 0; backgrou
 .gcard .th svg { display: block; width: 100%; height: 100%; }
 .gcard .gl { padding: 4px 6px; font-size: 11px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .gcard .gl b { color: var(--text); font-weight: 600; }
+.aibox { border: 1px solid #5a4a28; background: #2a2620; border-radius: var(--r); padding: 10px; margin-top: 10px; }
+.aititle { font-weight: 700; color: var(--accent); margin-bottom: 6px; }
+.aibox textarea { margin-top: 6px; font-family: inherit; white-space: pre-wrap; }
+.aidirect { margin-top: 8px; }
+.aidirect summary { cursor: pointer; color: var(--muted); font-size: 11px; }
+.aidirect input, .aidirect button { margin-top: 6px; }

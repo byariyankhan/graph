@@ -126,6 +126,7 @@ tests/                     ইঞ্জিন টেস্ট, ES3 লিন্�
 - [x] Waffle / People icons / Proportional circles
 - [x] Comparison: Slope / Dumbbell / Waterfall / Gains & losses
 - [x] Gauge: Speedometer / Thermometer / Progress bars — **ধাপ ২-এর সব টাইপ শেষ**
+- [x] **AI দিয়ে ডেটা:** প্রম্পট কপি → ChatGPT/Claude → উত্তর পেস্ট = টেবিল, টাইটেল, সোর্স অটো; অথবা নিজের Claude API key দিয়ে সরাসরি (ওয়েব সার্চসহ)
 - [ ] ধাপ ৩: ম্যাপ (পরের কাজ)
 - [ ] লাইভ ডেটা: Stacked, Timeline, Pyramid, Race, Scatter
 - [ ] Essential Properties-এ ফন্ট বদল (AE 2024+ API যাচাই সাপেক্ষে)

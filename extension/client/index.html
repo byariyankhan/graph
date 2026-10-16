@@ -60,6 +60,22 @@
 
         <!-- DATA -->
         <div class="page" id="page-data">
+            <div class="aibox">
+                <div class="aititle">✨ Get the data from AI</div>
+                <textarea id="aiAsk" rows="2" placeholder="What data? e.g. GDP per person of Bangladesh, India and Pakistan, 1990–2023, every 5 years"></textarea>
+                <div class="row">
+                    <button id="aiCopy" class="ghost wide">① Copy prompt → paste into ChatGPT / Claude</button>
+                </div>
+                <label class="mini"><input type="checkbox" id="aiBn"> Labels &amp; title in বাংলা</label>
+                <textarea id="aiPaste" rows="3" placeholder="② Paste the AI's whole answer here — table, title and source fill in automatically"></textarea>
+                <details class="aidirect">
+                    <summary>Or ask Claude directly (your API key, searches the web)</summary>
+                    <input id="aiKey" type="password" placeholder="sk-ant-…" autocomplete="off">
+                    <label class="mini"><input type="checkbox" id="aiRemember"> Remember the key on this computer</label>
+                    <button id="aiGen" class="ghost wide">Generate with Claude</button>
+                </details>
+                <p class="hint">AI can be wrong — check the numbers and the source before you publish.</p>
+            </div>
             <div class="row between">
                 <label class="lbl">Data <span class="hint" id="dataHint"></span></label>
                 <div class="seg" id="dataMode"><button data-m="table" class="on">Table</button><button data-m="text">Paste / text</button></div>
@@ -182,6 +198,8 @@
     <script src="../shared/charts/gauge.js"></script>
     <script src="../shared/samples.js"></script>
     <script src="js/preview.js"></script>
+    <script src="js/vendor/anthropic.js"></script>
+    <script src="js/ai.js"></script>
     <script src="js/host.js"></script>
     <script src="js/panel.js"></script>
 </body>

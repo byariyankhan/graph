@@ -35,6 +35,7 @@ Plan, roadmap and chart catalogue (Bengali): **[PLAN.md](PLAN.md)**
   - **Create** drops the chart into the open comp at the playhead, as a precomp.
   - Edit it from the layer's **Essential Properties**: title, subtitle and source text, every colour (a Color Control per theme role), the data values, and chart scale / position.
   - Select the chart layer, then use **Load selected chart** and **Update chart**.
+- **Data from AI:** describe the data you want, then click **Copy prompt** and paste it into ChatGPT, Claude or Gemini. The prompt is tailored to the chart type and asks for sourced numbers with no guessing. Paste the whole reply back into the panel: markdown tables, TSV/CSV code blocks, JSON and Title / Subtitle / Source lines are all detected automatically. If you prefer, add your own Claude API key and click **Generate with Claude**. This uses the official Anthropic SDK with `claude-opus-5-5` and web search, so the figures come from real sources, and it has server-side refusal fallback enabled.
 - **Table editor** for manual data entry. You can also paste a block from Excel straight into it.
 - **The live preview in the panel uses the same engine as the AE render.**
 

@@ -272,6 +272,7 @@
     /* pasting a block from Excel into any cell replaces the table */
     $('grid').addEventListener('paste', function (e) {
         var txt = (e.clipboardData || window.clipboardData).getData('text');
+        if (txt && /```|^\s*\||(^|\n)\s*\**title\s*\**\s*:/im.test(txt)) { e.preventDefault(); importAI(txt); return; }
         if (txt && /[\t\n]/.test(txt)) { e.preventDefault(); state.data = txt; $('data').value = txt; renderGrid(); changed(); }
     });
     $('grid').addEventListener('click', function (e) {
@@ -353,6 +354,61 @@
     document.addEventListener('keydown', function (e) {
         if (e.code === 'Space' && !/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName)) { e.preventDefault(); play(); }
     });
+
+    /* ---------------------------------------------------------- AI data */
+    var KEY_STORE = 'docugraph.claudeKey';
+    function aiPrompt() {
+        var ty = TYPES.filter(function (x) { return x.id === state.type; })[0] || TYPES[0];
+        var va = (DG.VARIANTS[state.type] || []).filter(function (x) { return x.id === state.variant; })[0] || { label: state.variant };
+        var smp = DG.sample(state.type, state.variant);
+        return DGAI.buildPrompt({
+            ask: $('aiAsk').value, type: state.type, variant: state.variant, typeLabel: ty.label, variantLabel: va.label,
+            bangla: $('aiBn').checked, example: smp ? smp.data.split('\n').slice(0, 3).join('\n') : ''
+        });
+    }
+    function importAI(text) {
+        var r = DGAI.smartParse(text);
+        if (!r) { setStatus('No table found in that answer — paste the whole reply', 'err'); return false; }
+        state.data = r.data;
+        if (r.title) { state.title = r.title; }
+        if (r.subtitle) { state.subtitle = r.subtitle; }
+        if (r.source) { state.source = r.source; }
+        state.dataMode = 'table';
+        fillForm(); rebuild();
+        setStatus('✓ Imported ' + r.rows + ' rows' + (r.source ? ' · ' + r.source : '') + (r.notes ? ' · Note: ' + r.notes : ''), 'ok');
+        return true;
+    }
+    $('aiCopy').addEventListener('click', function () {
+        if (!DG.trim($('aiAsk').value)) { setStatus('First write what data you need', 'err'); $('aiAsk').focus(); return; }
+        DGAI.copy(aiPrompt()).then(function (ok) {
+            setStatus(ok ? '✓ Prompt copied — paste it into ChatGPT / Claude, then paste the answer in box ②' : 'Copy blocked — select the prompt manually', ok ? 'ok' : 'err');
+            if (!ok) { $('aiPaste').value = aiPrompt(); $('aiPaste').select(); }
+        });
+    });
+    $('aiPaste').addEventListener('paste', function () { setTimeout(function () { importAI($('aiPaste').value); }, 0); });
+    $('aiPaste').addEventListener('change', function () { if (DG.trim($('aiPaste').value)) { importAI($('aiPaste').value); } });
+    try { var savedKey = localStorage.getItem(KEY_STORE); if (savedKey) { $('aiKey').value = savedKey; $('aiRemember').checked = true; } } catch (e) { /* storage off */ }
+    $('aiRemember').addEventListener('change', function () {
+        try { if ($('aiRemember').checked) { localStorage.setItem(KEY_STORE, $('aiKey').value); } else { localStorage.removeItem(KEY_STORE); } } catch (e) { /* storage off */ }
+    });
+    $('aiGen').addEventListener('click', function () {
+        var key = DG.trim($('aiKey').value);
+        if (!DG.trim($('aiAsk').value)) { setStatus('First write what data you need', 'err'); $('aiAsk').focus(); return; }
+        if (!key) { setStatus('Paste your Claude API key first (console.anthropic.com)', 'err'); return; }
+        try { if ($('aiRemember').checked) { localStorage.setItem(KEY_STORE, key); } } catch (e) { /* storage off */ }
+        var btn = $('aiGen');
+        btn.disabled = true;
+        DGAI.generate(key, aiPrompt(), function (m) { setStatus(m); }).then(function (text) {
+            btn.disabled = false;
+            $('aiPaste').value = text;
+            importAI(text);
+        }, function (err) {
+            btn.disabled = false;
+            setStatus(DGAI.errorText(err), 'err');
+        });
+    });
+    $('aiAsk').value = state.aiAsk || '';
+    $('aiAsk').addEventListener('input', function () { state.aiAsk = $('aiAsk').value; save(); });
 
     function setStatus(msg, cls) { var s = $('status'); s.textContent = msg; s.className = 'status' + (cls ? ' ' + cls : ''); s.title = msg; }
 
