@@ -82,6 +82,69 @@ DG.SAMPLES = {
             '2023\t27.36\t17.79\t4.21\t4.46\t3.55\t3.34\t3.03\t2.17\t2.25',
         options: { highlight: 'India', periodSec: 1.6 }, format: { prefix: '$', suffix: 'T', decimals: 2 }
     },
+    'scatter': {
+        title: 'Richer and healthier', subtitle: 'Income vs life expectancy, 2020 (rounded, illustrative)', source: 'Source: World Bank (sample)',
+        data: 'Country\tGDP per person (US$)\tLife expectancy\tPopulation (M)\tRegion\n' +
+            'Bangladesh\t2233\t72\t167\tSouth Asia\n' +
+            'India\t1916\t70\t1396\tSouth Asia\n' +
+            'Pakistan\t1322\t66\t227\tSouth Asia\n' +
+            'Sri Lanka\t3695\t76\t22\tSouth Asia\n' +
+            'Nepal\t1155\t70\t29\tSouth Asia\n' +
+            'China\t10409\t78\t1411\tEast Asia\n' +
+            'Indonesia\t3870\t71\t274\tEast Asia\n' +
+            'Vietnam\t3586\t75\t97\tEast Asia',
+        options: { highlight: '' }, format: {}
+    },
+    'scatter:scatter': {
+        title: 'Richer and healthier', subtitle: 'Income vs life expectancy, 2020 (rounded, illustrative)', source: 'Source: World Bank (sample)',
+        data: 'Country\tGDP per person (US$)\tLife expectancy\n' +
+            'Bangladesh\t2233\t72\n' +
+            'India\t1916\t70\n' +
+            'Pakistan\t1322\t66\n' +
+            'Sri Lanka\t3695\t76\n' +
+            'Nepal\t1155\t70\n' +
+            'China\t10409\t78\n' +
+            'Indonesia\t3870\t71\n' +
+            'Vietnam\t3586\t75',
+        options: { highlight: 'Bangladesh' }, format: {}
+    },
+    'scatter:gapminder': {
+        title: 'Thirty years of progress', subtitle: 'Income vs life expectancy · bubble = population (rounded, illustrative)', source: 'Source: World Bank (sample)',
+        data: 'Country\tYear\tGDP per person (US$)\tLife expectancy\tPopulation (M)\tRegion\n' +
+            'Bangladesh\t1990\t306\t58\t107\tSouth Asia\n' +
+            'Bangladesh\t2000\t418\t65\t129\tSouth Asia\n' +
+            'Bangladesh\t2010\t781\t69\t148\tSouth Asia\n' +
+            'Bangladesh\t2020\t2233\t72\t167\tSouth Asia\n' +
+            'India\t1990\t368\t58\t870\tSouth Asia\n' +
+            'India\t2000\t443\t62\t1060\tSouth Asia\n' +
+            'India\t2010\t1351\t66\t1240\tSouth Asia\n' +
+            'India\t2020\t1916\t70\t1396\tSouth Asia\n' +
+            'Pakistan\t1990\t371\t60\t115\tSouth Asia\n' +
+            'Pakistan\t2000\t534\t62\t154\tSouth Asia\n' +
+            'Pakistan\t2010\t987\t64\t194\tSouth Asia\n' +
+            'Pakistan\t2020\t1322\t66\t227\tSouth Asia\n' +
+            'Sri Lanka\t1990\t463\t69\t17\tSouth Asia\n' +
+            'Sri Lanka\t2000\t869\t71\t19\tSouth Asia\n' +
+            'Sri Lanka\t2010\t2744\t74\t20\tSouth Asia\n' +
+            'Sri Lanka\t2020\t3695\t76\t22\tSouth Asia\n' +
+            'Nepal\t1990\t190\t54\t18\tSouth Asia\n' +
+            'Nepal\t2000\t225\t62\t23\tSouth Asia\n' +
+            'Nepal\t2010\t592\t67\t27\tSouth Asia\n' +
+            'Nepal\t2020\t1155\t70\t29\tSouth Asia\n' +
+            'China\t1990\t318\t69\t1135\tEast Asia\n' +
+            'China\t2000\t959\t72\t1263\tEast Asia\n' +
+            'China\t2010\t4550\t75\t1338\tEast Asia\n' +
+            'China\t2020\t10409\t78\t1411\tEast Asia\n' +
+            'Indonesia\t1990\t585\t63\t182\tEast Asia\n' +
+            'Indonesia\t2000\t780\t66\t214\tEast Asia\n' +
+            'Indonesia\t2010\t3122\t69\t244\tEast Asia\n' +
+            'Indonesia\t2020\t3870\t71\t274\tEast Asia\n' +
+            'Vietnam\t1990\t95\t70\t68\tEast Asia\n' +
+            'Vietnam\t2000\t390\t73\t80\tEast Asia\n' +
+            'Vietnam\t2010\t1673\t74\t88\tEast Asia\n' +
+            'Vietnam\t2020\t3586\t75\t97\tEast Asia',
+        options: { periodSec: 1.5 }, format: {}
+    },
     'pyramid': {
         title: 'A young nation', subtitle: 'Population by age, % of total (illustrative)', source: 'Source: sample data',
         data: 'Age\tMale\tFemale\n0-9\t9.1\t8.8\n10-19\t9.4\t9.2\n20-29\t8.6\t8.9\n30-39\t7.4\t7.6\n40-49\t5.9\t5.8\n50-59\t4.2\t4.1\n60-69\t2.6\t2.7\n70+\t1.6\t1.8',

@@ -11,6 +11,7 @@
         { id: 'counter', label: 'Big number', icon: '<text x="22" y="22" text-anchor="middle" font-size="17" font-weight="700" stroke="none">123</text>' },
         { id: 'timeline', label: 'Timeline', icon: '<line x1="3" y1="15" x2="41" y2="15" stroke-width="2"/><circle cx="10" cy="15" r="3"/><circle cx="22" cy="15" r="3"/><circle cx="34" cy="15" r="3"/>' },
         { id: 'race', label: 'Bar race', icon: '<rect x="4" y="3" width="34" height="6"/><rect x="4" y="12" width="25" height="6" opacity=".7"/><rect x="4" y="21" width="16" height="6" opacity=".45"/>' },
+        { id: 'scatter', label: 'Bubble', icon: '<circle cx="11" cy="20" r="5"/><circle cx="23" cy="12" r="8" opacity=".7"/><circle cx="35" cy="20" r="3.5"/>' },
         { id: 'pyramid', label: 'Pyramid', icon: '<rect x="8" y="22" width="13" height="5"/><rect x="23" y="22" width="13" height="5"/><rect x="11" y="15" width="10" height="5"/><rect x="23" y="15" width="10" height="5"/><rect x="15" y="8" width="6" height="5"/><rect x="23" y="8" width="6" height="5"/>' }
     ];
 
@@ -38,7 +39,7 @@
         state.data = s.data;
         state.options.highlight = (s.options && s.options.highlight) || '';
         state.options.sort = (s.options && s.options.sort) || 'none';
-        state.options.periodSec = (s.options && s.options.periodSec) || 1;
+        state.options.periodSec = (s.options && s.options.periodSec) || (state.type === 'scatter' ? 1.5 : 1);
         /* keep the user's language choices (digits) across samples */
         var digits = state.format && state.format.digits;
         state.format = Object.assign({}, DEFAULT.format, s.format || {});
@@ -124,7 +125,8 @@
         var hints = {
             bar: 'label, value[, value…]', line: 'x (year), series…', pie: 'label, value',
             counter: 'label, value[, start value]', timeline: state.variant === 'eras' ? 'start, end, label' : 'date, title[, note]', pyramid: 'group, left, right',
-            race: 'year, entity 1, entity 2, … (or entities × years)'
+            race: 'year, entity 1, entity 2, … (or entities × years)',
+            scatter: state.variant === 'gapminder' ? 'entity, year, x, y, size[, group]' : state.variant === 'scatter' ? 'label, x, y[, group]' : 'label, x, y, size[, group]'
         };
         $('dataHint').textContent = '— columns: ' + hints[state.type];
     }

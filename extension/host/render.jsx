@@ -423,6 +423,19 @@ var DGAE = (function () {
         if (el.fill) { setFill(l, g, el.fill); }
         if (el.stroke) { setStroke(l, g, el, el.stroke, el.sw, 'butt'); }
         groupAnims(l, g, el, c);
+        /* moving bubbles: position + size keyframes (linear between periods) */
+        var kcx = findKeys(el, 'cx'), kcy = findKeys(el, 'cy'), kr = findKeys(el, 'r');
+        if (kcx && kcy) {
+            var pk = [];
+            for (var q = 0; q < kcx.times.length; q++) { pk.push([kcx.times[q], [kcx.vals[q], kcy.vals[q]]]); }
+            setKeys(item(l, g, 'Ellipse').property('ADBE Vector Ellipse Position'), pk, DG.easeDef(kcx.ease));
+            if (findA(el, 'pop')) {
+                /* pop around where the bubble starts */
+                gt(l, g).property('ADBE Vector Anchor').setValue([kcx.vals[0], kcy.vals[0]]);
+                gt(l, g).property('ADBE Vector Position').setValue([kcx.vals[0], kcy.vals[0]]);
+            }
+        }
+        if (kr) { multiKeys(item(l, g, 'Ellipse').property('ADBE Vector Ellipse Size'), kr, function (v) { return [v * 2, v * 2]; }); }
         if (el.live && el.live.kind === 'point' && LIVE) {
             var lp = el.live, pexp = liveHead() + maxCode(lp.max) + '[' + lp.x + ', ' + lp.base + ' - ' + vref(lp.cell) + ' / MX * ' + lp.len + '];';
             item(l, g, 'Ellipse').property('ADBE Vector Ellipse Position').expression = pexp;

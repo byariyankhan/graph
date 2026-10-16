@@ -95,7 +95,7 @@
             if (a.kind !== 'keys') { continue; }
             if (!c) { c = {}; for (var k in el) { if (el.hasOwnProperty(k)) { c[k] = el[k]; } } }
             var v = DG.keysVal(a, t);
-            if (a.prop === 'w' && el.growDir === 'right') { c.w = v; } else if (a.prop === 'h' && el.growDir === 'up') { c.y = el.y + el.h - v; c.h = v; } else { c['k_' + a.prop] = v; if (a.prop === 'x' || a.prop === 'y' || a.prop === 'w' || a.prop === 'h') { c[a.prop] = v; } }
+            if (a.prop === 'w' && el.growDir === 'right') { c.w = v; } else if (a.prop === 'h' && el.growDir === 'up') { c.y = el.y + el.h - v; c.h = v; } else { c['k_' + a.prop] = v; if (a.prop === 'x' || a.prop === 'y' || a.prop === 'w' || a.prop === 'h' || a.prop === 'cx' || a.prop === 'cy' || a.prop === 'r') { c[a.prop] = v; } }
         }
         return c || el;
     };

@@ -37,7 +37,7 @@
 | # | টাইপ | ভ্যারিয়েন্ট |
 |---|---|---|
 | 7 | **Bar Chart Race** ✅ | Horizontal race ✅ · Column race ✅ · Line race (৩) |
-| 8 | **Scatter / Bubble** | Scatter · Bubble · Gapminder (সময়ের সাথে চলমান) (৩) |
+| 8 | **Scatter / Bubble** ✅ | Scatter ✅ · Bubble ✅ · Gapminder (সময়ের সাথে চলমান) ✅ (৩) |
 | 9 | **Pictogram / Waffle** | Waffle 10×10 · Icon array (মানুষ আইকন) · Proportional circles (৩) |
 | 10 | **Comparison** | Dumbbell · Slope · Waterfall · Before/After (৪) |
 | 11 | **Gauge / Meter** | Semi gauge · Thermometer · Progress bar (৩) |
@@ -122,7 +122,8 @@ tests/                     ইঞ্জিন টেস্ট, ES3 লিন্�
   - Essential Properties: Title / Subtitle / Source, সব রঙ (Color Controls), ডেটা স্লাইডার, Chart Scale / Position
   - মেইন কম্পে চার্ট লেয়ার সিলেক্ট করে Load → এডিট → Update
 - [x] লাইভ ডেটা: Line (line / smooth / stepped / area) — লাইন, পয়েন্ট, চলমান ডট, শেষের লেবেল সব স্লাইডারে চলে
-- [ ] লাইভ ডেটা: Stacked, Timeline, Pyramid, Race
+- [x] Scatter / Bubble / Gapminder (log scale অটো, গ্রুপ রঙ, হাইলাইট)
+- [ ] লাইভ ডেটা: Stacked, Timeline, Pyramid, Race, Scatter
 - [ ] Essential Properties-এ ফন্ট বদল (AE 2024+ API যাচাই সাপেক্ষে)
 - [ ] ধাপ ২ বাকি: Scatter/Bubble, Waffle, Comparison, Gauge, অ্যানোটেশন, re-edit
 - [ ] ধাপ ৩: ম্যাপ, Treemap, Sankey, Radar
