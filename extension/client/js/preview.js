@@ -65,18 +65,20 @@
         opt = opt || {};
         var W = scene.width, H = scene.height, out = [], defs = [], i, byId = {};
         for (i = 0; i < scene.els.length; i++) { byId[scene.els[i].id] = scene.els[i]; }
-        var ctx = { t: t, defs: defs, byId: byId, uid: 0, glow: scene.glow };
+        P.seq = (P.seq || 0) + 1;
+        var pre = 'dg' + P.seq + '_';
+        var ctx = { t: t, defs: defs, byId: byId, uid: 0, glow: scene.glow, pre: pre };
         if (scene.transparent) {
-            defs.push('<pattern id="chk" width="40" height="40" patternUnits="userSpaceOnUse"><rect width="40" height="40" fill="#2b2b2b"/><rect width="20" height="20" fill="#363636"/><rect x="20" y="20" width="20" height="20" fill="#363636"/></pattern>');
-            out.push('<rect width="' + W + '" height="' + H + '" fill="url(#chk)"/>');
+            defs.push('<pattern id="' + pre + 'chk" width="40" height="40" patternUnits="userSpaceOnUse"><rect width="40" height="40" fill="#2b2b2b"/><rect width="20" height="20" fill="#363636"/><rect x="20" y="20" width="20" height="20" fill="#363636"/></pattern>');
+            out.push('<rect width="' + W + '" height="' + H + '" fill="url(#' + pre + 'chk)"/>');
         } else if (scene.bg2) {
-            defs.push('<radialGradient id="bgg" cx="50%" cy="45%" r="75%"><stop offset="0" stop-color="' + scene.bg2 + '"/><stop offset="1" stop-color="' + scene.bg + '"/></radialGradient>');
-            out.push('<rect width="' + W + '" height="' + H + '" fill="url(#bgg)"/>');
+            defs.push('<radialGradient id="' + pre + 'bgg" cx="50%" cy="45%" r="75%"><stop offset="0" stop-color="' + scene.bg2 + '"/><stop offset="1" stop-color="' + scene.bg + '"/></radialGradient>');
+            out.push('<rect width="' + W + '" height="' + H + '" fill="url(#' + pre + 'bgg)"/>');
         } else {
             out.push('<rect width="' + W + '" height="' + H + '" fill="' + scene.bg + '"/>');
         }
         if (scene.glow) {
-            defs.push('<filter id="glow" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="' + r2(W / 300) + '" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>');
+            defs.push('<filter id="' + pre + 'glow" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="' + r2(W / 300) + '" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>');
         }
         for (i = 0; i < scene.els.length; i++) {
             var s = P.el(scene.els[i], ctx);
@@ -114,7 +116,7 @@
         if (pop && ps <= 0.001) { return ''; }
         var center = P.center(el, ctx);
         if (pop && ps !== 1) { tr += ' translate(' + r2(center[0]) + ' ' + r2(center[1]) + ') scale(' + r2(ps * 1000) / 1000 + ') translate(' + r2(-center[0]) + ' ' + r2(-center[1]) + ')'; }
-        var g = el.glow && ctx.glow ? ' filter="url(#glow)"' : '';
+        var g = el.glow && ctx.glow ? ' filter="url(#' + ctx.pre + 'glow)"' : '';
         var body = P[el.type] ? P[el.type](el, ctx) : '';
         if (!body) { return ''; }
         return '<g opacity="' + r2(op) + '"' + (tr ? ' transform="' + tr + '"' : '') + g + '>' + body + '</g>';
@@ -168,7 +170,7 @@
         if (w) {
             var x = DG.interp(w.times, w.xs, ctx.t);
             if (ctx.t <= w.t0) { return ''; }
-            var id = 'clip' + el.id;
+            var id = ctx.pre + 'clip' + el.id;
             ctx.defs.push('<clipPath id="' + id + '"><rect x="' + r2(w.xs[0] - 2) + '" y="' + r2(w.y0) + '" width="' + r2(Math.max(0, x - w.xs[0] + 2)) + '" height="' + r2(w.y1 - w.y0) + '"/></clipPath>');
             clip = ' clip-path="url(#' + id + ')"';
         }

@@ -145,6 +145,21 @@ DG.SAMPLES = {
             'Vietnam\t2020\t3586\t75\t97\tEast Asia',
         options: { periodSec: 1.5 }, format: {}
     },
+    'waffle': {
+        title: 'Who can read?', subtitle: 'Adult literacy rate (illustrative)', source: 'Source: sample data',
+        data: 'Group\tPercent\nCan read and write\t76',
+        options: { restLabel: 'Cannot read' }, format: {}
+    },
+    'waffle:icons': {
+        title: 'Where people live', subtitle: 'Out of every 100 people (illustrative)', source: 'Source: sample data',
+        data: 'Area\tPeople\nCities\t40\nVillages\t60',
+        options: {}, format: {}
+    },
+    'waffle:circles': {
+        title: 'How big is Bangladesh?', subtitle: 'Land area, thousand km\u00b2 (rounded)', source: 'Source: sample data',
+        data: 'Country\tArea\nIndia\t3287\nPakistan\t881\nMyanmar\t677\nNepal\t147\nBangladesh\t148\nSri Lanka\t66',
+        options: { highlight: 'Bangladesh' }, format: { suffix: 'K km\u00b2' }
+    },
     'pyramid': {
         title: 'A young nation', subtitle: 'Population by age, % of total (illustrative)', source: 'Source: sample data',
         data: 'Age\tMale\tFemale\n0-9\t9.1\t8.8\n10-19\t9.4\t9.2\n20-29\t8.6\t8.9\n30-39\t7.4\t7.6\n40-49\t5.9\t5.8\n50-59\t4.2\t4.1\n60-69\t2.6\t2.7\n70+\t1.6\t1.8',

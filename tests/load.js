@@ -8,7 +8,7 @@ const SHARED = [
     'shared/core.js', 'shared/themes.js', 'shared/build.js',
     'shared/charts/bar.js', 'shared/charts/line.js', 'shared/charts/pie.js',
     'shared/charts/counter.js', 'shared/charts/timeline.js', 'shared/charts/pyramid.js',
-    'shared/charts/race.js', 'shared/charts/scatter.js',
+    'shared/charts/race.js', 'shared/charts/scatter.js', 'shared/charts/waffle.js',
     'shared/samples.js'
 ];
 
