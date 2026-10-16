@@ -303,6 +303,12 @@ var DGAE = (function () {
         var op = (el.opacity === undefined ? 1 : el.opacity) * 100;
         T.property('ADBE Vector Group Opacity').setValue(op);
         if ((a = findA(el, 'fade'))) { animKeys(T.property('ADBE Vector Group Opacity'), a, 0, op); }
+        if ((a = findA(el, 'rotate'))) {
+            /* swing around a pivot (gauge needle) */
+            gt(l, g).property('ADBE Vector Anchor').setValue([a.cx, a.cy]);
+            gt(l, g).property('ADBE Vector Position').setValue([a.cx, a.cy]);
+            animKeys(gt(l, g).property('ADBE Vector Rotation'), a, a.from, a.to);
+        }
         if ((a = findKeys(el, 'op'))) {
             multiKeys(gt(l, g).property('ADBE Vector Group Opacity'), a, function (v) { return v * op; });
         }

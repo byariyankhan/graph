@@ -40,7 +40,7 @@
 | 8 | **Scatter / Bubble** ✅ | Scatter ✅ · Bubble ✅ · Gapminder (সময়ের সাথে চলমান) ✅ (৩) |
 | 9 | **Pictogram / Waffle** ✅ | Waffle 10×10 ✅ · Icon array (মানুষ আইকন) ✅ · Proportional circles ✅ (৩) |
 | 10 | **Comparison** ✅ | Slope ✅ · Dumbbell ✅ · Waterfall ✅ · Gains & losses (+/−) ✅ (৪) |
-| 11 | **Gauge / Meter** | Semi gauge · Thermometer · Progress bar (৩) |
+| 11 | **Gauge / Meter** ✅ | Speedometer ✅ · Thermometer ✅ · Progress bars ✅ (৩) |
 
 এছাড়া ধাপ ২-এ: লাইন চার্টে **অ্যানোটেশন** ("১৯৭১ – মুক্তিযুদ্ধ" উল্লম্ব মার্কার), থিম এডিটর ও নিজস্ব থিম সেভ, কম্প থেকে চার্ট আবার খুলে এডিট (re-edit), CSV/Excel ফাইল ইমপোর্ট।
 
@@ -125,6 +125,8 @@ tests/                     ইঞ্জিন টেস্ট, ES3 লিন্�
 - [x] Scatter / Bubble / Gapminder (log scale অটো, গ্রুপ রঙ, হাইলাইট)
 - [x] Waffle / People icons / Proportional circles
 - [x] Comparison: Slope / Dumbbell / Waterfall / Gains & losses
+- [x] Gauge: Speedometer / Thermometer / Progress bars — **ধাপ ২-এর সব টাইপ শেষ**
+- [ ] ধাপ ৩: ম্যাপ (পরের কাজ)
 - [ ] লাইভ ডেটা: Stacked, Timeline, Pyramid, Race, Scatter
 - [ ] Essential Properties-এ ফন্ট বদল (AE 2024+ API যাচাই সাপেক্ষে)
 - [ ] ধাপ ২ বাকি: Scatter/Bubble, Waffle, Comparison, Gauge, অ্যানোটেশন, re-edit

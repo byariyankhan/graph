@@ -112,6 +112,8 @@
         if (a) { f = DG.animF(a, t); op *= DG.clamp(f, 0, 1); dy = (a.dy || 0) * (1 - f); }
         if (op <= 0.001) { return ''; }
         if (dy) { tr += 'translate(0 ' + r2(dy) + ')'; }
+        var ro = findA(el, 'rotate');
+        if (ro) { tr += ' rotate(' + r2(ro.from + (ro.to - ro.from) * DG.animF(ro, t)) + ' ' + r2(ro.cx) + ' ' + r2(ro.cy) + ')'; }
         var pop = findA(el, 'pop'), ps = pop ? DG.animF(pop, t) : 1;
         if (pop && ps <= 0.001) { return ''; }
         var center = P.center(el, ctx);

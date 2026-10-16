@@ -180,6 +180,21 @@ DG.SAMPLES = {
         data: 'Country\tGrowth %\nIndia\t8.2\nBangladesh\t5.8\nBhutan\t4.6\nNepal\t1.9\nPakistan\t-0.2\nSri Lanka\t-2.3',
         options: { highlight: '' }, format: { suffix: '%', decimals: 1 }
     },
+    'gauge': {
+        title: 'Prices are rising', subtitle: 'Inflation, % a year (illustrative)', source: 'Source: sample data',
+        data: 'Measure\tValue\tMax\nInflation\t9.7\t15',
+        options: {}, format: { suffix: '%', decimals: 1 }
+    },
+    'gauge:thermometer': {
+        title: 'A warming country', subtitle: 'Hottest day of the year, \u00b0C (illustrative)', source: 'Source: sample data',
+        data: 'City\tTemp\tMax\nDhaka\t40.6\t50\nRajshahi\t43.0\t50\nSylhet\t36.2\t50',
+        options: {}, format: { suffix: '\u00b0', decimals: 1 }
+    },
+    'gauge:progress': {
+        title: 'Road to the goals', subtitle: 'Progress towards 2030 targets, % (illustrative)', source: 'Source: sample data',
+        data: 'Goal\tDone\tMax\tTarget\nElectricity access\t99\t100\t100\nPrimary school completion\t82\t100\t95\nSafe drinking water\t59\t100\t90\nInternet use\t39\t100\t75',
+        options: {}, format: { suffix: '%' }
+    },
     'pyramid': {
         title: 'A young nation', subtitle: 'Population by age, % of total (illustrative)', source: 'Source: sample data',
         data: 'Age\tMale\tFemale\n0-9\t9.1\t8.8\n10-19\t9.4\t9.2\n20-29\t8.6\t8.9\n30-39\t7.4\t7.6\n40-49\t5.9\t5.8\n50-59\t4.2\t4.1\n60-69\t2.6\t2.7\n70+\t1.6\t1.8',
