@@ -36,6 +36,12 @@ DG.build = function (specIn) {
         ease: spec.anim.ease, over: spec.anim.overshoot ? 1.12 : 0, portrait: H > W * 1.15
     };
     /* Base timings (seconds) — all divided by the speed factor. */
+    /* Live data: charts register each data value as a "cell"; the AE
+     * renderer turns cells into sliders on the DG Controller and drives the
+     * chart with expressions (preview stays static). */
+    ctx.live = spec.options.live !== false;
+    ctx.cells = [];
+    ctx.cell = function (label, value) { ctx.cells.push({ label: String(label), value: value }); return ctx.cells.length - 1; };
     ctx.T = {
         title: 0.2 / sp, sub: 0.45 / sp, source: 1.0 / sp, axes: 0.55 / sp, data: 1.15 / sp,
         grow: 1.0 / sp, pop: 0.55 / sp, fade: 0.6 / sp, draw: 3.6 / sp,
@@ -55,8 +61,27 @@ DG.build = function (specIn) {
     return {
         name: spec.name || DG.compName(spec), width: W, height: H, fps: Number(spec.fps) || 30, duration: dur,
         bg: th.bg, bg2: th.bg2, transparent: spec.background === 'transparent', glow: th.glow,
-        theme: spec.theme, els: ctx.els, dataEnd: end
+        theme: spec.theme, els: ctx.els, dataEnd: end, live: DG.liveInfo(ctx.cells)
     };
+};
+
+/* Slider names + a scale factor (AE sliders are limited to ±1,000,000). */
+DG.liveInfo = function (cells) {
+    if (!cells.length) { return null; }
+    var m = 0, i, factor = 1, used = {};
+    for (i = 0; i < cells.length; i++) { m = Math.max(m, Math.abs(cells[i].value || 0)); }
+    while (m / factor >= 1e6 && factor < 1e15) { factor *= 1000; }
+    var suf = factor === 1 ? '' : factor === 1e3 ? ' (x1K)' : factor === 1e6 ? ' (x1M)' : factor === 1e9 ? ' (x1B)' : ' (x1T)';
+    var out = [];
+    for (i = 0; i < cells.length; i++) {
+        var nm = DG.trim(cells[i].label).substring(0, 26) || ('Value ' + (i + 1));
+        nm = nm.replace(/"/g, "'");
+        var base = nm, k = 2;
+        while (used.hasOwnProperty(nm + suf)) { nm = base + ' ' + k; k++; }
+        used[nm + suf] = true;
+        out.push({ name: nm + suf, value: (cells[i].value || 0) / factor });
+    }
+    return { cells: out, factor: factor };
 };
 
 DG.compName = function (spec) {
@@ -209,9 +234,10 @@ DG.yGrid = function (ctx, tk, X0, X1, Y, F, o) {
             });
         }
         if (ctx.opts.axis !== false && !o.noLabels) {
-            ctx.text('Tick ' + i, DG.fmt(v, tf), X0 - 16 * u, y + 8 * u, 24 * u, {
+            var tl = ctx.text('Tick ' + i, DG.fmt(v, tf), X0 - 16 * u, y + 8 * u, 24 * u, {
                 color: th.muted, align: 'right', font: 'body', anim: ctx.fadeIn(ctx.T.axes + i * 0.05, 0)
             });
+            if (o.liveMax) { tl.live = { kind: 'tick', frac: i / (tk.ticks.length - 1), max: o.liveMax, fmt: tf }; }
         }
     }
 };

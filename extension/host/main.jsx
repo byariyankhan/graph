@@ -43,12 +43,33 @@ DGHost.build = function (specJson) {
     }
 };
 
+/* Re-build the chart inside the active DocuGraph comp (keeps the comp, its
+ * name and its uses in other comps; the user's own extra layers survive). */
+DGHost.update = function (specJson) {
+    try {
+        if (!DGHost.ready) { var r = DGHost.init(); if (r.indexOf('OK') !== 0) { return r; } }
+        var c = app.project.activeItem;
+        if (!c || !(c instanceof CompItem) || String(c.comment).indexOf('DocuGraph') !== 0) {
+            return 'ERR|Select (open) a DocuGraph comp first';
+        }
+        return DGAE.render(DG.build(DG.parseJSON(specJson)), specJson, c);
+    } catch (e) {
+        return 'ERR|' + e.toString() + (e.line ? ' (line ' + e.line + ')' : '');
+    }
+};
+
 /* Read the spec back from a DocuGraph comp (to re-edit a chart). */
 DGHost.readActive = function () {
     try {
         var c = app.project.activeItem;
         if (!c || !(c instanceof CompItem) || String(c.comment).indexOf('DocuGraph') !== 0) { return 'NONE|'; }
-        return 'OK|' + String(c.comment).substring(String(c.comment).indexOf('\n') + 1);
+        var body = String(c.comment).substring(String(c.comment).indexOf('\n') + 1), out = '', i, ch, h;
+        /* escape non-ASCII so Bangla survives the trip back to the panel */
+        for (i = 0; i < body.length; i++) {
+            ch = body.charCodeAt(i);
+            if (ch > 126) { h = ch.toString(16); while (h.length < 4) { h = '0' + h; } out += '\\u' + h; } else { out += body.charAt(i); }
+        }
+        return 'OK|' + out;
     } catch (e) {
         return 'ERR|' + e.toString();
     }

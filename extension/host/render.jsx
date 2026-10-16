@@ -12,7 +12,8 @@
  *     the whole chart can be moved / scaled at once
  */
 var DGAE = (function () {
-    var comp, ctrl, W, H, layerMap, nameCount, glowDone;
+    var comp, ctrl, W, H, layerMap, nameCount, glowDone, LIVE;
+    var AXIS_MAX = 'Axis Max (0 = auto)';
 
     function P(x, y) { return [x - W / 2, y - H / 2]; }
     function rgb(hex) { return DG.hexToRgb(hex); }
@@ -65,6 +66,87 @@ var DGAE = (function () {
         if (a.over) { keys.push([a.t0 + (a.t1 - a.t0) * DG.OVER_MID, mixv(v0, v1, a.over)]); }
         keys.push([a.t1, v1]);
         setKeys(prop, keys, DG.easeDef(a.ease));
+    }
+
+    /* ------------------------------------------------------------ live data
+     * Each data value is a slider on "DG Controller". Live elements read
+     * them through expressions, so changing a slider re-draws bars, slices,
+     * labels and the axis. A per-layer "Progress" slider (keyframed) keeps
+     * the entrance animation. */
+    function liveHead() {
+        return '// DocuGraph live data: edit the sliders on "DG Controller"\n' +
+            'var C = thisComp.layer("DG Controller");\nvar F = ' + LIVE.factor + ';\n' +
+            'function V(n) { return C.effect(n)(1) * F; }\n';
+    }
+    function vref(ci) { return 'V(' + DG.quote(LIVE.cells[ci].name) + ')'; }
+    function vArr(cells) {
+        var a = [];
+        for (var i = 0; i < cells.length; i++) { a.push(vref(cells[i])); }
+        return '[' + a.join(', ') + ']';
+    }
+    function maxCode(mx) {
+        return 'var MX = (function () { var a = ' + vArr(mx.cells) + ', m = 0, i; for (i = 0; i < a.length; i++) { if (Math.abs(a[i]) > m) { m = Math.abs(a[i]); } }\n' +
+            (mx.nice ? '  var o = C.effect("' + AXIS_MAX + '")(1) * F; if (o > 0) { return o; }\n  return (' + DG.NICEMAX_SRC + ')(m);'
+                : '  return m > 0 ? m : 1;') + ' })();\n';
+    }
+    /* tot / cum / vI for slice-based kinds */
+    function sliceCode(lv) {
+        return 'var a = ' + vArr(lv.cells) + ', tot = 0, cum = 0, i;\n' +
+            'for (i = 0; i < a.length; i++) { var x = Math.max(0, a[i]); tot += x; if (i < ' + lv.index + ') { cum += x; } }\n' +
+            'if (tot <= 0) { tot = 1; }\nvar vI = Math.max(0, a[' + lv.index + ']);\n';
+    }
+    var PROG = 'var p = effect("Progress")(1) / 100;\n';
+    var PROG01 = 'var p = clamp(effect("Progress")(1) / 100, 0, 1);\n';
+    function addProgress(l, a) {
+        var sl = l.property('ADBE Effect Parade').addProperty('ADBE Slider Control');
+        sl.name = 'Progress';
+        if (a) { animKeys(l.property('ADBE Effect Parade').property('Progress').property(1), a, 0, 100); } else { l.property('ADBE Effect Parade').property('Progress').property(1).setValue(100); }
+    }
+    function liveSliders(scene) {
+        var fx = ctrl.property('ADBE Effect Parade'), i, needAxis = false;
+        for (i = 0; i < scene.els.length; i++) {
+            var lv = scene.els[i].live;
+            if (lv && ((lv.max && lv.max.nice) || (lv.pos && lv.pos.max && lv.pos.max.nice))) { needAxis = true; }
+        }
+        for (i = 0; i < LIVE.cells.length; i++) {
+            var sl = fx.addProperty('ADBE Slider Control');
+            sl.name = LIVE.cells[i].name;
+            ctrl.property('ADBE Effect Parade').property(LIVE.cells[i].name).property(1).setValue(LIVE.cells[i].value);
+        }
+        if (needAxis) {
+            var ax = ctrl.property('ADBE Effect Parade').addProperty('ADBE Slider Control');
+            ax.name = AXIS_MAX;
+        }
+    }
+    /* Text value + position expressions for a live text element. */
+    function liveTextExpr(el) {
+        var lv = el.live, fmt = lv.fmt || (el.count ? el.count.fmt : {}), code = liveHead(), X, ref = null;
+        if (lv.kind === 'tick') {
+            code += maxCode(lv.max); X = 'MX * ' + lv.frac; ref = 'MX';
+        } else if (lv.kind === 'value') {
+            var from = lv.from || 0;
+            code += PROG01; X = from + ' + (' + vref(lv.cell) + ' - ' + from + ') * p'; ref = vref(lv.cell);
+        } else if (lv.kind === 'pct') {
+            code += PROG01 + sliceCode(lv); X = 'vI / tot * 100 * p';
+        } else if (lv.kind === 'sum') {
+            code += PROG01 + 'var a = ' + vArr(lv.cells) + ', s = 0, i; for (i = 0; i < a.length; i++) { s += a[i]; }\n'; X = 's * p'; ref = 's';
+        }
+        code += 'var O = ' + DG.toJSON(fmt) + ';\n';
+        if (ref && fmt.ref !== undefined) { code += 'O.ref = ' + ref + ';\n'; }
+        return code + '(' + DG.FMT_SRC + ')(' + X + ', O);';
+    }
+    function livePosExpr(pos) {
+        var code = liveHead();
+        if (pos.kind === 'barEnd') {
+            code += maxCode(pos.max) + PROG01 + 'var L = ' + vref(pos.cell) + ' / MX * ' + pos.len + ' * p;\n';
+            if (pos.dir === 'up') { return code + '[' + (pos.at - W / 2) + ', ' + pos.base + ' - L - ' + pos.off + ' - ' + (H / 2) + '];'; }
+            return code + '[' + pos.base + ' + L + ' + pos.off + ' - ' + (W / 2) + ', ' + (pos.at - H / 2) + '];';
+        }
+        if (pos.kind === 'sliceMid') {
+            return code + sliceCode(pos) + 'var mid = (' + pos.start + ' + ' + pos.span + ' * (cum + vI / 2) / tot) * Math.PI / 180;\n' +
+                '[' + pos.cx + ' + Math.sin(mid) * ' + pos.r + ' - ' + (W / 2) + ', ' + pos.cy + ' - Math.cos(mid) * ' + pos.r + ' + ' + pos.dy + ' - ' + (H / 2) + '];';
+        }
+        return null;
     }
 
     /* Multi-key animation → keyframes; mapFn turns each value into the
@@ -177,6 +259,18 @@ var DGAE = (function () {
         setFill(l, g, el.fill);
         if (el.stroke) { setStroke(l, g, el, el.stroke, el.sw, 'butt'); }
         var a = findA(el, 'grow');
+        if (el.live && el.live.kind === 'bar' && LIVE) {
+            var lv = el.live, lc = liveHead() + maxCode(lv.max) + PROG + 'var L = ' + vref(lv.cell) + ' / MX * ' + lv.len + ' * p;\n';
+            addProgress(l, a);
+            if (lv.dir === 'up') {
+                item(l, g, 'Rect').property('ADBE Vector Rect Size').expression = lc + '[' + el.w + ', Math.abs(L)];';
+                item(l, g, 'Rect').property('ADBE Vector Rect Position').expression = lc + '[' + cx + ', ' + lv.base + ' - L / 2];';
+            } else {
+                item(l, g, 'Rect').property('ADBE Vector Rect Size').expression = lc + '[Math.abs(L), ' + el.h + '];';
+                item(l, g, 'Rect').property('ADBE Vector Rect Position').expression = lc + '[' + lv.base + ' + L / 2, ' + cy + '];';
+            }
+            a = null;
+        }
         if (a) {
             var s0, p0;
             if (a.dir === 'up') { s0 = [el.w, 0]; p0 = [cx, el.y + el.h]; } else if (a.dir === 'down') { s0 = [el.w, 0]; p0 = [cx, el.y]; } else if (a.dir === 'right') { s0 = [0, el.h]; p0 = [el.x, cy]; } else { s0 = [0, el.h]; p0 = [el.x + el.w, cy]; }
@@ -288,6 +382,19 @@ var DGAE = (function () {
         tr.property('ADBE Vector Trim Start').setValue(0);
         tr.property('ADBE Vector Trim Offset').setValue(el.a0);
         tr.property('ADBE Vector Trim End').setValue(ext);
+        if (el.live && LIVE) {
+            var lv = el.live;
+            addProgress(l, a ? DG.extend({}, a, { over: 0 }) : null);
+            if (lv.kind === 'slice') {
+                var sc = liveHead() + sliceCode(lv) + 'var a0 = ' + lv.start + ' + ' + lv.span + ' * cum / tot + ' + (lv.gap / 2) + ';\n' +
+                    'var ext = Math.max(0, ' + lv.span + ' * vI / tot - ' + lv.gap + ');\n';
+                item(l, g, 'Trim').property('ADBE Vector Trim Offset').expression = sc + 'a0;';
+                item(l, g, 'Trim').property('ADBE Vector Trim End').expression = sc + PROG01 + 'ext / 360 * 100 * p;';
+            } else if (lv.kind === 'ringPct') {
+                item(l, g, 'Trim').property('ADBE Vector Trim End').expression = liveHead() + PROG01 + 'clamp(' + vref(lv.cell) + ', 0, 100) * p;';
+            }
+            a = null;
+        }
         if (a) { animKeys(item(l, g, 'Trim').property('ADBE Vector Trim End'), DG.extend({}, a, { over: 0 }), 0, ext); }
         groupAnims(l, g, el, [el.cx, el.cy]);
         return l;
@@ -351,6 +458,13 @@ var DGAE = (function () {
             }
         }
         var cnt = findA(el, 'count'), ty = findA(el, 'type'), fl = findA(el, 'followLabel');
+        if (el.live && LIVE) {
+            if (cnt) { addProgress(l, cnt); }
+            tp.expression = liveTextExpr(el);
+            var pe = el.live.pos ? livePosExpr(DG.extend({ cell: el.live.cell }, el.live.pos)) : null;
+            if (pe) { l.transform.position.expression = pe; }
+            cnt = null; ty = null;
+        }
         if (cnt || ty) {
             var sl = l.property('ADBE Effect Parade').addProperty('ADBE Slider Control');
             sl.name = 'Progress';
@@ -392,14 +506,25 @@ var DGAE = (function () {
         return app.project.items.addFolder(name);
     }
 
-    function render(scene, specJson) {
-        W = scene.width; H = scene.height; layerMap = {}; nameCount = {}; glowDone = {};
+    function render(scene, specJson, target) {
+        W = scene.width; H = scene.height; layerMap = {}; nameCount = {}; glowDone = {}; LIVE = scene.live;
         if (!app.project) { app.newProject(); }
         app.beginUndoGroup('DocuGraph: create chart');
         var made = 0, i, byId = {};
         try {
-            comp = app.project.items.addComp(scene.name, W, H, 1, scene.duration, scene.fps);
-            try { comp.parentFolder = findFolder('DocuGraph'); } catch (ef) { /* ignore */ }
+            if (target) {
+                /* Update in place: remove only the layers DocuGraph made */
+                comp = target;
+                for (i = comp.numLayers; i >= 1; i--) {
+                    var old = comp.layer(i);
+                    if (old.comment === 'DocuGraph') { old.locked = false; old.remove(); }
+                }
+                comp.width = W; comp.height = H; comp.duration = scene.duration; comp.frameRate = scene.fps;
+            } else {
+                comp = app.project.items.addComp(scene.name, W, H, 1, scene.duration, scene.fps);
+                try { comp.parentFolder = findFolder('DocuGraph'); } catch (ef) { /* ignore */ }
+            }
+            var before = comp.numLayers;
             try { comp.comment = 'DocuGraph ' + DG.version + '\n' + specJson; } catch (ec) { /* ignore */ }
             comp.bgColor = rgb(scene.bg);
 
@@ -422,6 +547,7 @@ var DGAE = (function () {
             ctrl.transform.anchorPoint.setValue([0, 0]);
             ctrl.transform.position.setValue([W / 2, H / 2]);
 
+            if (LIVE) { liveSliders(scene); }
             for (i = 0; i < scene.els.length; i++) { byId[scene.els[i].id] = scene.els[i]; }
             for (i = 0; i < scene.els.length; i++) {
                 var el = scene.els[i], l = null;
@@ -433,6 +559,8 @@ var DGAE = (function () {
                 made++;
             }
             ctrl.moveToBeginning();
+            /* tag our layers so "Update" can replace them later */
+            for (i = 1; i <= comp.numLayers - before; i++) { try { comp.layer(i).comment = 'DocuGraph'; } catch (em) { /* ignore */ } }
             comp.openInViewer();
         } finally {
             app.endUndoGroup();

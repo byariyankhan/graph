@@ -113,6 +113,10 @@ tests/                     ইঞ্জিন টেস্ট, ES3 লিন্�
 - [x] আসল After Effects-এ প্যানেল কানেক্ট হয় (AE 26.3)
 - [x] "DG is undefined" বাগ ঠিক করা হয়েছে
 - [x] Bar Chart Race (horizontal + column)
+- [x] **লাইভ ডেটা:** AE-তে `DG Controller`-এর স্লাইডার বদলালে চার্ট নিজেই বদলায় (Bar, Pie/Donut, Big Number)
+- [x] **Update open comp:** কম্প থেকে সেটিংস লোড → এডিট → একই কম্পে আপডেট
+- [x] টেবিল ডেটা এডিটর (Excel থেকে পেস্টও চলে)
+- [ ] লাইভ ডেটা: Line, Stacked, Timeline, Pyramid
 - [ ] ধাপ ২ বাকি: Scatter/Bubble, Waffle, Comparison, Gauge, অ্যানোটেশন, re-edit
 - [ ] ধাপ ৩: ম্যাপ, Treemap, Sankey, Radar
 - [ ] সাইন করা ZXP প্যাকেজ

@@ -17,7 +17,8 @@
     var DEFAULT = {
         type: 'bar', variant: 'column', theme: 'docDark', size: '1920x1080', fps: 30, duration: 10,
         title: '', subtitle: '', source: '', credit: '', data: '',
-        options: { highlight: '', sort: 'none', colorBy: 'single', values: true, grid: true, axis: true, endLabels: true },
+        options: { highlight: '', sort: 'none', colorBy: 'single', values: true, grid: true, axis: true, endLabels: true, live: true },
+        dataMode: 'table',
         format: { prefix: '', suffix: '', decimals: '', grouping: 'intl', digits: 'latin', compact: 'none' },
         style: { hiOn: false, hi: '#E8B04B', fTitle: '', fBody: '', fBnBold: '', fBnBody: '' },
         anim: { speed: 1, stagger: 0.12, ease: 'out', titleAnim: 'fade', overshoot: true },
@@ -37,6 +38,7 @@
         state.data = s.data;
         state.options.highlight = (s.options && s.options.highlight) || '';
         state.options.sort = (s.options && s.options.sort) || 'none';
+        state.options.periodSec = (s.options && s.options.periodSec) || 1;
         /* keep the user's language choices (digits) across samples */
         var digits = state.format && state.format.digits;
         state.format = Object.assign({}, DEFAULT.format, s.format || {});
@@ -59,10 +61,12 @@
             data: state.data, background: state.background,
             options: {
                 highlight: state.options.highlight, sort: state.options.sort, colorBy: state.options.colorBy,
-                values: state.options.values, grid: state.options.grid, axis: state.options.axis, endLabels: state.options.endLabels
+                values: state.options.values, grid: state.options.grid, axis: state.options.axis, endLabels: state.options.endLabels,
+                live: state.options.live !== false, periodSec: Number(state.options.periodSec) || 1
             },
             format: f,
             style: { hi: st.hiOn ? st.hi : '', fonts: fonts },
+            panel: state,
             anim: {
                 speed: Number(state.anim.speed), stagger: Number(state.anim.stagger), ease: state.anim.ease,
                 titleAnim: state.anim.titleAnim, overshoot: !!state.anim.overshoot
@@ -136,7 +140,7 @@
     /* form field ↔ state path bindings */
     var BIND = {
         size: 'size', fps: 'fps', data: 'data', highlight: 'options.highlight', sort: 'options.sort', colorBy: 'options.colorBy',
-        values: 'options.values', grid: 'options.grid', axis: 'options.axis', endLabels: 'options.endLabels',
+        values: 'options.values', grid: 'options.grid', axis: 'options.axis', endLabels: 'options.endLabels', live: 'options.live', periodSec: 'options.periodSec',
         hi: 'style.hi', hiOn: 'style.hiOn', background: 'background', fTitle: 'style.fTitle', fBody: 'style.fBody',
         fBnBold: 'style.fBnBold', fBnBody: 'style.fBnBody', title: 'title', subtitle: 'subtitle', source: 'source', credit: 'credit',
         prefix: 'format.prefix', suffix: 'format.suffix', decimals: 'format.decimals', grouping: 'format.grouping',
@@ -156,8 +160,82 @@
             if (el.type === 'checkbox') { el.checked = !!v; } else { el.value = v === undefined || v === null ? '' : v; }
         });
         $('speedV').textContent = '×' + Number(state.anim.speed).toFixed(1);
-        renderTypes(); renderThemes(); info();
+        renderTypes(); renderThemes(); renderGrid(); info();
     }
+
+    /* ------------------------------------------------- table data editor */
+    function toRows() {
+        var rows;
+        if (state.data.indexOf('\t') >= 0 || /^\s*$/.test(state.data)) {
+            /* tab data: split directly so empty rows being typed survive */
+            rows = state.data.replace(/\r/g, '').split('\n').map(function (l) { return l.split('\t'); });
+            while (rows.length > 1 && rows[rows.length - 1].join('') === '' && rows[rows.length - 1].length === 1) { rows.pop(); }
+        } else {
+            var tb = DG.parseTable(state.data);
+            rows = [tb.headers.slice()].concat(tb.rows.map(function (r) { return r.slice(); }));
+        }
+        if (!rows.length || !rows[0].length || rows[0].join('') === '') { rows = [['Label', 'Value'], ['', '']]; }
+        var w = Math.max.apply(null, rows.map(function (r) { return r.length; }));
+        rows.forEach(function (r) { while (r.length < w) { r.push(''); } });
+        return rows;
+    }
+    function fromRows(rows) {
+        state.data = rows.map(function (r) { return r.map(function (c) { return String(c).replace(/[\t\n]/g, ' '); }).join('\t'); }).join('\n');
+        $('data').value = state.data;
+    }
+    function renderGrid() {
+        var tableMode = state.dataMode !== 'text';
+        $('gridWrap').style.display = tableMode ? '' : 'none';
+        $('gridBtns').style.display = tableMode ? '' : 'none';
+        $('data').style.display = tableMode ? 'none' : '';
+        [].forEach.call(document.querySelectorAll('#dataMode button'), function (b) { b.classList.toggle('on', (b.dataset.m === 'table') === tableMode); });
+        if (!tableMode) { return; }
+        var rows = toRows(), esc = function (v) { return String(v).replace(/&/g, '&amp;').replace(/"/g, '&quot;'); };
+        $('grid').innerHTML = rows.map(function (r, i) {
+            return '<tr>' + r.map(function (c, j) { return '<td><input data-r="' + i + '" data-c="' + j + '" value="' + esc(c) + '"></td>'; }).join('') +
+                '<td class="x">' + (i > 0 ? '<button data-del="' + i + '" title="Delete row">×</button>' : '') + '</td></tr>';
+        }).join('');
+    }
+    $('grid').addEventListener('input', function (e) {
+        var inp = e.target;
+        if (!inp.dataset || inp.dataset.r === undefined) { return; }
+        var rows = [].map.call($('grid').rows, function (tr) { return [].map.call(tr.querySelectorAll('input'), function (x) { return x.value; }); });
+        fromRows(rows); changed();
+    });
+    $('grid').addEventListener('keydown', function (e) {
+        if (e.key !== 'Enter' || !e.target.dataset) { return; }
+        var r = Number(e.target.dataset.r) + 1, c = e.target.dataset.c;
+        var next = $('grid').querySelector('input[data-r="' + r + '"][data-c="' + c + '"]');
+        if (!next) { $('addRow').click(); next = $('grid').querySelector('input[data-r="' + r + '"][data-c="' + c + '"]'); }
+        if (next) { next.focus(); next.select(); }
+    });
+    /* pasting a block from Excel into any cell replaces the table */
+    $('grid').addEventListener('paste', function (e) {
+        var txt = (e.clipboardData || window.clipboardData).getData('text');
+        if (txt && /[\t\n]/.test(txt)) { e.preventDefault(); state.data = txt; $('data').value = txt; renderGrid(); changed(); }
+    });
+    $('grid').addEventListener('click', function (e) {
+        var d = e.target.dataset && e.target.dataset.del;
+        if (!d) { return; }
+        var rows = toRows(); rows.splice(Number(d), 1); fromRows(rows); renderGrid(); changed();
+    });
+    $('addRow').addEventListener('click', function () { var rows = toRows(); rows.push(rows[0].map(function () { return ''; })); fromRows(rows); renderGrid(); changed(); });
+    $('addCol').addEventListener('click', function () {
+        var rows = toRows();
+        rows.forEach(function (r, i) { r.push(i === 0 ? 'Series ' + r.length : ''); });
+        fromRows(rows); renderGrid(); changed();
+    });
+    $('delCol').addEventListener('click', function () {
+        var rows = toRows();
+        if (rows[0].length <= 2) { return; }
+        rows.forEach(function (r) { r.pop(); });
+        fromRows(rows); renderGrid(); changed();
+    });
+    $('dataMode').addEventListener('click', function (e) {
+        var b = e.target.closest('button');
+        if (!b) { return; }
+        state.dataMode = b.dataset.m; renderGrid(); save();
+    });
     function info() {
         var tb = DG.parseTable(state.data), sd = DG.seriesData(tb);
         $('parseInfo').textContent = tb.rows.length + ' rows · ' + sd.series.length + ' numeric column' + (sd.series.length === 1 ? '' : 's');
@@ -218,14 +296,30 @@
 
     function setStatus(msg, cls) { var s = $('status'); s.textContent = msg; s.className = 'status' + (cls ? ' ' + cls : ''); s.title = msg; }
 
-    $('create').addEventListener('click', function () {
-        if (!Host.available) { setStatus('Open this panel inside After Effects to create the comp', 'err'); return; }
-        var btn = $('create');
-        btn.disabled = true; setStatus('Building comp…');
-        Host.build(spec()).then(function (res) {
+    function run(btnId, call, verb) {
+        if (!Host.available) { setStatus('Open this panel inside After Effects to do this', 'err'); return; }
+        var btn = $(btnId);
+        btn.disabled = true; setStatus(verb + '…');
+        call().then(function (res) {
             btn.disabled = false;
             var p = res.split('|');
-            if (p[0] === 'OK') { setStatus('✓ Created "' + p[1] + '" (' + p[3] + ' layers)', 'ok'); } else { setStatus(p.slice(1).join('|') || res, 'err'); }
+            if (p[0] === 'OK') { setStatus('✓ ' + verb + ' "' + p[1] + '" (' + p[3] + ' layers)', 'ok'); } else { setStatus(p.slice(1).join('|') || res, 'err'); }
+        });
+    }
+    $('create').addEventListener('click', function () { run('create', function () { return Host.build(spec()); }, 'Created'); });
+    $('update').addEventListener('click', function () { run('update', function () { return Host.update(spec()); }, 'Updated'); });
+    $('loadComp').addEventListener('click', function () {
+        if (!Host.available) { setStatus('Open this panel inside After Effects to do this', 'err'); return; }
+        Host.readActive().then(function (res) {
+            var i = res.indexOf('|'), tag = res.substring(0, i), body = res.substring(i + 1);
+            if (tag !== 'OK') { setStatus(tag === 'NONE' ? 'Open a DocuGraph comp in the timeline first' : body, 'err'); return; }
+            try {
+                var sp = JSON.parse(body);
+                if (!sp.panel) { setStatus('This comp was made by an older version — settings could not be loaded', 'err'); return; }
+                state = Object.assign(JSON.parse(JSON.stringify(DEFAULT)), sp.panel);
+                fillForm(); rebuild();
+                setStatus('✓ Loaded settings from the comp — edit, then “Update open comp”', 'ok');
+            } catch (e) { setStatus('Could not read comp settings: ' + e.message, 'err'); }
         });
     });
 

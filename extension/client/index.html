@@ -53,12 +53,22 @@
 
         <!-- DATA -->
         <div class="page" id="page-data">
-            <label class="lbl">Paste from Excel / Google Sheets / CSV <span class="hint" id="dataHint"></span></label>
-            <textarea id="data" spellcheck="false" rows="10"></textarea>
+            <div class="row between">
+                <label class="lbl">Data <span class="hint" id="dataHint"></span></label>
+                <div class="seg" id="dataMode"><button data-m="table" class="on">Table</button><button data-m="text">Paste / text</button></div>
+            </div>
+            <div id="gridWrap" class="gridwrap"><table id="grid" class="grid"></table></div>
+            <div class="row" id="gridBtns">
+                <button id="addRow" class="ghost">+ Row</button>
+                <button id="addCol" class="ghost">+ Column</button>
+                <button id="delCol" class="ghost">− Last column</button>
+            </div>
+            <textarea id="data" spellcheck="false" rows="10" style="display:none" placeholder="Paste from Excel / Google Sheets, or CSV"></textarea>
             <div class="row">
                 <button id="loadSample" class="ghost">Load sample</button>
                 <span id="parseInfo" class="hint"></span>
             </div>
+            <label class="mini live"><input type="checkbox" id="live" checked> <b>Live data in AE</b> — every value becomes a slider on “DG Controller”; change it in AE and the chart redraws (bar, pie/donut, big number)</label>
             <label class="lbl">Highlight (comma separated names)</label>
             <input id="highlight" placeholder="e.g. Bangladesh">
             <div class="row">
@@ -131,6 +141,10 @@
                     <select id="titleAnim"><option value="fade">Fade up</option><option value="type">Typewriter</option></select></div>
             </div>
             <div class="row">
+                <div><label class="lbl">Bar race: seconds per year/period</label><input id="periodSec" type="number" min="0.2" max="10" step="0.1" value="1"></div>
+                <div></div>
+            </div>
+            <div class="row">
                 <div><label class="lbl">Comp length (s)</label><input id="duration" type="number" min="3" max="120" value="10"></div>
                 <label class="mini" style="align-self:end"><input type="checkbox" id="overshoot" checked> Overshoot / bounce</label>
             </div>
@@ -138,7 +152,11 @@
     </main>
 
     <footer class="foot">
-        <button id="create" class="primary">Create in After Effects</button>
+        <button id="create" class="primary">Create new comp</button>
+        <div class="row">
+            <button id="loadComp" class="ghost wide" title="Open a DocuGraph comp, then load its settings here">⤓ Load from open comp</button>
+            <button id="update" class="ghost wide" title="Rebuild the chart inside the open DocuGraph comp">⟳ Update open comp</button>
+        </div>
     </footer>
 
     <script src="../shared/core.js"></script>

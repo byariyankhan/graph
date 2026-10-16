@@ -61,3 +61,23 @@ input[type=range] { padding: 0; accent-color: var(--accent); border: 0; backgrou
 .primary:hover { background: var(--accent2); }
 .primary:disabled { opacity: .5; cursor: default; }
 .ghost { background: none; border: 1px solid var(--line); border-radius: var(--r); padding: 5px 10px; cursor: pointer; flex: 0 0 auto; }
+
+.between { justify-content: space-between; align-items: center; }
+.between > * { flex: 0 0 auto; }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: var(--r); overflow: hidden; }
+.seg button { background: none; border: 0; padding: 4px 10px; color: var(--muted); cursor: pointer; }
+.seg button.on { background: var(--panel); color: var(--text); }
+.gridwrap { max-height: 280px; overflow: auto; border: 1px solid var(--line); border-radius: var(--r); }
+.grid { border-collapse: collapse; width: 100%; }
+.grid td, .grid th { border: 1px solid var(--line); padding: 0; min-width: 70px; }
+.grid input { border: 0; border-radius: 0; background: transparent; padding: 5px 6px; }
+.grid input:focus { background: #33302a; }
+.grid tr:first-child input { font-weight: 700; color: var(--accent); }
+.grid td.x { min-width: 22px; width: 22px; text-align: center; }
+.grid td.x button { background: none; border: 0; color: var(--muted); cursor: pointer; padding: 0 4px; }
+.grid td.x button:hover { color: var(--err); }
+.live { margin-top: 12px; line-height: 1.35; align-items: flex-start; }
+.foot .row { margin-top: 8px; }
+.ghost.wide { flex: 1; padding: 7px 6px; }
+.mini.live { display: block; }
+.mini.live input { vertical-align: -2px; margin-right: 4px; }

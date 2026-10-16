@@ -311,6 +311,19 @@ DG.ticks = function (min, max, n) {
     for (var k = 0; lo + k * step <= hi + step * 0.5; k++) { ticks.push(DG.round(lo + k * step, dec + 2)); }
     return { min: lo, max: hi, step: step, ticks: ticks, decimals: dec };
 };
+/* Live-data axis: always 5 ticks (0, ¼, ½, ¾, max) with a "nice" max. Kept
+ * as source so AE expressions compute the identical axis when a data slider
+ * changes. */
+DG.NICEMAX_SRC = 'function(m){if(!(m>0))return 1;var r=m/4,e=Math.floor(Math.log(r)/Math.LN10),b=Math.pow(10,e),f=r/b;' +
+    'var s=f<=1.000001?1:f<=2.000001?2:f<=2.500001?2.5:f<=5.000001?5:10;return s*b*4;}';
+DG.niceMax = eval('(' + DG.NICEMAX_SRC + ')');
+DG.liveTicks = function (max) {
+    var M = DG.niceMax(max), st = M / 4;
+    var dec = Math.max(0, -Math.floor(Math.log(st) / Math.LN10 + 1e-9));
+    if (Math.abs(st * Math.pow(10, dec) - Math.round(st * Math.pow(10, dec))) > 1e-9) { dec += 1; }
+    return { min: 0, max: M, step: st, ticks: [0, st, st * 2, st * 3, M], decimals: dec };
+};
+
 /* Number format for axis ticks: same units/digits as the data, sensible decimals. */
 DG.tickFmt = function (F, tk) {
     var div = DG.compactDiv(Math.max(Math.abs(tk.max), Math.abs(tk.min)), F.compact);

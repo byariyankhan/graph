@@ -28,16 +28,19 @@ DG.charts.counter = function (ctx) {
 
     if (variant === 'compare' && rows.length >= 2) {
         var half = P.w / 2, maxV = Math.max(Math.abs(rows[0].v), Math.abs(rows[1].v));
-        var ns = 1e9, k;
+        var ns = 1e9, k, cmpCells = null;
+        if (ctx.live && rows[0].v >= 0 && rows[1].v >= 0) { cmpCells = [ctx.cell(rows[0].label, rows[0].v), ctx.cell(rows[1].label, rows[1].v)]; }
         for (k = 0; k < 2; k++) { ns = Math.min(ns, DG.fit(DG.fmt(rows[k].v, DG.extend({}, F, { ref: rows[k].v })), 150 * u, half * 0.82, 40 * u)); }
         var cyN = P.y + P.h * 0.48;
         for (k = 0; k < 2; k++) {
             var cx = P.x + half * (k + 0.5), col = ctx.color(k), tk = T.data + k * 0.35;
-            ctx.countText('Value ' + (k + 1), rows[k].from, rows[k].v, DG.extend({}, F, { ref: rows[k].v }), cx, cyN, ns, { align: 'center', color: col }, tk, dur);
+            var cvt = ctx.countText('Value ' + (k + 1), rows[k].from, rows[k].v, DG.extend({}, F, { ref: rows[k].v }), cx, cyN, ns, { align: 'center', color: col }, tk, dur);
+            if (cmpCells) { cvt.live = { kind: 'value', cell: cmpCells[k], from: rows[k].from }; }
             ctx.text('Label ' + (k + 1), rows[k].label, cx, cyN + 64 * u, DG.fit(rows[k].label, 40 * u, half * 0.8, 18 * u), { align: 'center', color: th.text, anim: ctx.fadeIn(tk + 0.2) });
             var bw = half * 0.7 * Math.abs(rows[k].v) / (maxV || 1), by = cyN + 110 * u;
             ctx.add({ type: 'rect', name: 'Track ' + (k + 1), layer: 'Tracks', x: cx - half * 0.35, y: by, w: half * 0.7, h: 18 * u, fill: th.dim, r: 9 * u, opacity: 0.5, anim: ctx.A('fade', tk, 0.5, { ease: 'easy' }) });
-            ctx.add({ type: 'rect', name: 'Bar ' + (k + 1), x: cx - half * 0.35, y: by, w: Math.max(bw, 1), h: 18 * u, fill: col, r: 9 * u, glow: th.glow, anim: ctx.A('grow', tk, dur, { dir: 'right' }) });
+            var cbr = ctx.add({ type: 'rect', name: 'Bar ' + (k + 1), x: cx - half * 0.35, y: by, w: Math.max(bw, 1), h: 18 * u, fill: col, r: 9 * u, glow: th.glow, anim: ctx.A('grow', tk, dur, { dir: 'right' }) });
+            if (cmpCells) { cbr.live = { kind: 'bar', cell: cmpCells[k], dir: 'right', base: cx - half * 0.35, len: half * 0.7, max: { cells: cmpCells, nice: false } }; }
         }
         ctx.text('VS', o.vsText || 'VS', P.x + half, cyN - ns * 0.3, 44 * u, { align: 'center', color: th.muted, font: 'title', anim: ctx.A('pop', T.data + 0.2, T.pop, { over: ctx.over }) });
         ctx.add({ type: 'line', name: 'Divider', x1: P.x + half, y1: P.y + P.h * 0.12, x2: P.x + half, y2: cyN - ns * 0.3 - 60 * u, stroke: th.grid, sw: 2 * u, cap: 'butt', anim: ctx.A('draw', T.axes, 0.6) });
@@ -57,7 +60,8 @@ DG.charts.counter = function (ctx) {
             ctx.add({ type: 'rect', name: 'Card Accent ' + (i + 1), x: x, y: y, w: 8 * u, h: ch, fill: colr, r: 0, anim: ctx.A('grow', t0 + 0.1, 0.5, { dir: 'down' }) });
             var vfmt = DG.extend({}, F, { ref: rows[i].v });
             var vs = DG.fit(DG.fmt(rows[i].v, vfmt), Math.min(110 * u, ch * 0.42), cw * 0.82, 26 * u);
-            ctx.countText('Value ' + (i + 1), rows[i].from, rows[i].v, vfmt, x + 44 * u, y + ch * 0.52, vs, { color: colr }, t0 + 0.15, dur);
+            var cdv = ctx.countText('Value ' + (i + 1), rows[i].from, rows[i].v, vfmt, x + 44 * u, y + ch * 0.52, vs, { color: colr }, t0 + 0.15, dur);
+            if (ctx.live) { cdv.live = { kind: 'value', cell: ctx.cell(rows[i].label, rows[i].v), from: rows[i].from }; }
             ctx.text('Label ' + (i + 1), rows[i].label, x + 44 * u, y + ch * 0.52 + 50 * u, DG.fit(rows[i].label, 30 * u, cw * 0.82, 14 * u), { color: th.muted, anim: ctx.fadeIn(t0 + 0.3) });
         }
         return;
@@ -68,7 +72,8 @@ DG.charts.counter = function (ctx) {
     var big = DG.fit(DG.fmt(it.v, sf), ctx.portrait ? 200 * u : 240 * u, P.w * 0.9, 60 * u);
     var cy = P.y + P.h * 0.5 + big * 0.3;
     var hc = o.highlight ? th.hi : th.accent;
-    ctx.countText('Big Number', it.from, it.v, sf, P.x + P.w / 2, cy, big, { align: 'center', color: o.numberColor === 'text' ? th.text : hc }, T.data, dur * 1.2);
+    var bn = ctx.countText('Big Number', it.from, it.v, sf, P.x + P.w / 2, cy, big, { align: 'center', color: o.numberColor === 'text' ? th.text : hc }, T.data, dur * 1.2);
+    if (ctx.live) { bn.live = { kind: 'value', cell: ctx.cell(it.label || 'Value', it.v), from: it.from }; }
     ctx.add({
         type: 'line', name: 'Underline', x1: P.x + P.w / 2 - 90 * u, y1: cy + 46 * u, x2: P.x + P.w / 2 + 90 * u, y2: cy + 46 * u,
         stroke: th.grid, sw: 4 * u, cap: 'butt', anim: ctx.A('draw', T.data + 0.2, 0.8)

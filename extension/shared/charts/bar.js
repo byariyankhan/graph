@@ -58,8 +58,22 @@ DG.charts.bar = function (ctx) {
             for (s = 0; s < nS; s++) { dmax = Math.max(dmax, vals[i][s]); dmin = Math.min(dmin, vals[i][s]); }
         }
     }
+    /* live data (AE sliders) for column / horizontal / grouped with values ≥ 0 */
+    var live = ctx.live && mode === 'group' && dmin >= 0;
     var tk = mode === 'percent' ? { min: 0, max: 100, step: 25, ticks: [0, 25, 50, 75, 100], decimals: 0 }
-        : DG.ticks(dmin, dmax, Number(o.ticks) || 5);
+        : live ? DG.liveTicks(dmax) : DG.ticks(dmin, dmax, Number(o.ticks) || 5);
+    var cellOf = [], liveMax = null;
+    if (live) {
+        var allCells = [];
+        for (i = 0; i < n; i++) {
+            cellOf.push([]);
+            for (s = 0; s < nS; s++) {
+                var c = ctx.cell((nS > 1 ? S[s].name + ' ' : '') + data.cats[i], vals[i][s]);
+                cellOf[i].push(c); allCells.push(c);
+            }
+        }
+        liveMax = { cells: allCells, nice: true };
+    }
     var F = mode === 'percent' ? ctx.F({ suffix: '%', prefix: '', decimals: 0, compact: 'none' }) : ctx.F();
 
     /* Colours: multi-series → palette; single → highlight/dim or one colour */
@@ -89,7 +103,7 @@ DG.charts.bar = function (ctx) {
         var catSize = 26 * u;
         var px = P.x + axW, pw = P.w - axW, py = P.y + (showVals ? 46 * u : 10 * u), ph = P.h - (py - P.y) - 58 * u;
         var Y = function (v2) { return py + ph - (v2 - tk.min) / (tk.max - tk.min) * ph; };
-        DG.yGrid(ctx, tk, px, px + pw, Y, F);
+        DG.yGrid(ctx, tk, px, px + pw, Y, F, { liveMax: liveMax });
         var band = pw / n, bw = band * (1 - gap);
         var labelSize = catSize;
         for (k = 0; k < n; k++) { labelSize = Math.min(labelSize, DG.fit(data.cats[order[k]], catSize, band * 0.96, 14 * u)); }
@@ -121,17 +135,19 @@ DG.charts.bar = function (ctx) {
                         });
                         y1 = v3 >= 0 ? y1 - rr : y1 + rr;
                     } else {
-                        ctx.add({
+                        var br = ctx.add({
                             type: 'rect', name: 'Bar ' + nm, x: x0, y: Math.min(y0, y1), w: w0, h: Math.abs(y1 - y0),
                             fill: colorOf(i, s), r: Math.min(th.radius * u, w0 / 2), glow: th.glow,
                             anim: ctx.A('grow', ts, T.grow, { dir: v3 >= 0 ? 'up' : 'down', over: ctx.over ? 1.04 : 0 })
                         });
+                        if (live) { br.live = { kind: 'bar', cell: cellOf[i][s], dir: 'up', base: y0, len: ph, max: liveMax }; }
                     }
                     var vs = DG.fmt(v3, DG.extend({}, F, { ref: v3 }));
                     var vSize = Math.min(28 * u, DG.fit(vs, 28 * u, sub * 1.1, 12 * u));
                     if (showVals && (vSize >= 15 * u || o.values === true)) {
-                        ctx.countText('Value ' + nm, 0, v3, F, mid, v3 >= 0 ? y1 - 14 * u : y1 + vSize + 10 * u, vSize,
+                        var vl = ctx.countText('Value ' + nm, 0, v3, F, mid, v3 >= 0 ? y1 - 14 * u : y1 + vSize + 10 * u, vSize,
                             { align: 'center', color: th.text }, ts, T.grow);
+                        if (live && mode !== 'lolli') { vl.live = { kind: 'value', cell: cellOf[i][s], pos: { kind: 'barEnd', dir: 'up', base: y0, len: ph, max: liveMax, off: 14 * u, at: mid } }; }
                     }
                 }
             } else {
@@ -183,8 +199,9 @@ DG.charts.bar = function (ctx) {
                 anim: ctx.A('draw', T.axes + k * 0.05, 0.7, { ease: 'out' })
             });
             if (o.axis !== false) {
-                ctx.text('Tick ' + k, DG.fmt(tk.ticks[k], tf), gx, hy + hh + 36 * u, 22 * u,
+                var htl = ctx.text('Tick ' + k, DG.fmt(tk.ticks[k], tf), gx, hy + hh + 36 * u, 22 * u,
                     { align: 'center', color: th.muted, anim: ctx.fadeIn(T.axes + k * 0.05, 0) });
+                if (live) { htl.live = { kind: 'tick', frac: k / (tk.ticks.length - 1), max: liveMax, fmt: tf }; }
             }
         }
     }
@@ -208,16 +225,18 @@ DG.charts.bar = function (ctx) {
                     ctx.add({ type: 'circle', name: 'Dot ' + hn, cx: xb, cy: my, r: hr, fill: colorOf(i, s), anim: ctx.A('pop', tsh + T.grow * 0.8, T.pop, { over: ctx.over }) });
                     xb += hv >= 0 ? hr : -hr;
                 } else {
-                    ctx.add({
+                    var hbr = ctx.add({
                         type: 'rect', name: 'Bar ' + hn, x: Math.min(xa, xb), y: sy, w: Math.abs(xb - xa), h: sh, fill: colorOf(i, s),
                         r: Math.min(th.radius * u, sh / 2), glow: th.glow,
                         anim: ctx.A('grow', tsh, T.grow, { dir: hv >= 0 ? 'right' : 'left', over: ctx.over ? 1.03 : 0 })
                     });
+                    if (live) { hbr.live = { kind: 'bar', cell: cellOf[i][s], dir: 'right', base: xa, len: hw, max: liveMax }; }
                 }
                 if (showVals) {
                     var hs = Math.min(lblSize, sh * 0.9 + 6 * u);
-                    ctx.countText('Value ' + hn, 0, hv, F, hv >= 0 ? xb + 14 * u : xb - 14 * u, my + hs * 0.36, hs,
+                    var hvl = ctx.countText('Value ' + hn, 0, hv, F, hv >= 0 ? xb + 14 * u : xb - 14 * u, my + hs * 0.36, hs,
                         { align: hv >= 0 ? 'left' : 'right', color: hl ? th.hi : th.text }, tsh, T.grow);
+                    if (live && mode !== 'lolli') { hvl.live = { kind: 'value', cell: cellOf[i][s], pos: { kind: 'barEnd', dir: 'right', base: xa, len: hw, max: liveMax, off: 14 * u, at: my + hs * 0.36 } }; }
                 }
             }
         } else {

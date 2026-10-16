@@ -9,7 +9,7 @@ const vm = require('vm');
 const { EXT } = require('./load');
 
 function makeAE() {
-    const log = { layers: 0, props: 0, keys: 0, exprs: [], badValues: [] };
+    const log = { layers: 0, props: 0, keys: 0, exprs: [], textExprs: [], badValues: [] };
     function checkVal(v, where) {
         const flat = Array.isArray(v) ? v.flat(3) : [v];
         for (const x of flat) { if (typeof x === 'number' && !Number.isFinite(x)) { log.badValues.push(where); } }
@@ -21,6 +21,7 @@ function makeAE() {
             property(n) { if (!kids[n]) { kids[n] = prop(n); } return kids[n]; },
             addProperty(m) { log.props++; const c = prop(m); kids[m + '#' + log.props] = c; const proxy = c; setTimeout(() => {}, 0); return trackName(proxy, kids); },
             setValue(v) { checkVal(v, name); },
+            set expression(v) { log.exprs.push(v); }, get expression() { return ''; },
             setValueAtTime(t, v) { assert.ok(Number.isFinite(t), 'key time NaN on ' + name); checkVal(v, name + '@' + t); log.keys++; this.numKeys++; },
             nearestKeyIndex() { return 1; },
             setTemporalEaseAtKey(i, a, b) { assert.ok(a.length >= 1 && b.length === a.length); for (const e of a.concat(b)) { assert.ok(e.influence >= 0.1 && e.influence <= 100, 'influence ' + e.influence); } },
@@ -39,41 +40,47 @@ function makeAE() {
         l.transform = { position: prop('pos'), anchorPoint: prop('anchor'), opacity: prop('opacity'), scale: prop('scale') };
         const tkids = {};
         l.transform.property = (n) => { if (!tkids[n]) { tkids[n] = prop(n); } return tkids[n]; };
-        l.parent = null; l.locked = false;
+        l.parent = null; l.locked = false; l.comment = '';
+        l.remove = () => { const i = comp.list.indexOf(l); if (i >= 0) { comp.list.splice(i, 1); comp.numLayers--; } };
+        l.moveToBeginning = () => { const i = comp.list.indexOf(l); comp.list.splice(i, 1); comp.list.unshift(l); };
+        comp.list.unshift(l);
         const tp = prop('ADBE Text Document'); tp.value = { resetCharStyle() {}, resetParagraphStyle() {} };
-        Object.defineProperty(tp, 'expression', { set(v) { log.exprs.push(v); }, get() { return ''; } });
+        Object.defineProperty(tp, 'expression', { set(v) { log.exprs.push(v); log.textExprs.push({ layer: l, expr: v }); }, get() { return ''; } });
         const posP = l.transform.position;
         Object.defineProperty(posP, 'expression', { set(v) { log.exprs.push(v); }, get() { return ''; } });
         const orig = l.property.bind(l);
         l.property = (n) => n === 'ADBE Text Properties' ? { property: () => tp } : orig(n);
         return l;
     }
-    const comp = {
-        name: '', numLayers: 0, comment: '', bgColor: null,
+    const comp = Object.assign(Object.create({}), {
+        name: '', numLayers: 0, comment: '', bgColor: null, list: [], layer(i) { return comp.list[i - 1]; },
         layers: {
             addShape() { comp.numLayers++; return layer('shape'); },
-            addText(s) { comp.numLayers++; assert.ok(typeof s === 'string'); return layer('text'); },
+            addText(s) { comp.numLayers++; assert.ok(typeof s === 'string'); const l = layer('text'); l.initialText = s; return l; },
             addSolid() { comp.numLayers++; return layer('solid'); },
             addNull() { comp.numLayers++; return layer('null'); }
         },
         openInViewer() {}
-    };
+    });
     function FolderItem() {}
     const app = {
         version: '24.0-mock', project: {
             numItems: 0, item() { return null; },
             items: {
-                addComp(name, w, h, par, dur, fps) { assert.ok(w > 0 && h > 0 && dur > 0 && fps > 0); comp.name = name; return comp; },
+                addComp(name, w, h, par, dur, fps) { assert.ok(w > 0 && h > 0 && dur > 0 && fps > 0); comp.name = name; app.project.activeItem = comp; return comp; },
                 addFolder() { return new FolderItem(); }
             }
         },
         beginUndoGroup() {}, endUndoGroup() {}
     };
     function Shape() { this.vertices = []; }
+    const CompItem = function CompItem() {};
+    Object.setPrototypeOf(comp, CompItem.prototype);
+    comp.constructor = CompItem;
     function KeyframeEase(speed, influence) { this.speed = speed; this.influence = influence; }
     return {
         log, globals: {
-            app, Shape, KeyframeEase, FolderItem, CompItem: function () {},
+            app, Shape, KeyframeEase, FolderItem, CompItem: comp.constructor,
             KeyframeInterpolationType: { LINEAR: 6612, BEZIER: 6613 },
             PropertyValueType: { OneD: 1, TwoD: 2, ThreeD: 3, TwoD_SPATIAL: 4, ThreeD_SPATIAL: 5, COLOR: 6 },
             ParagraphJustification: { LEFT_JUSTIFY: 1, CENTER_JUSTIFY: 2, RIGHT_JUSTIFY: 3 },
@@ -126,12 +133,70 @@ for (const type of Object.keys(DG.VARIANTS)) {
 {
     const ae = makeAE(), sb = hostSandbox(ae);
     sb.DGHost.init(EXT);
-    const spec = Object.assign({}, DG.sample('counter', 'single'), { type: 'counter', variant: 'single', format: { digits: 'bn', grouping: 'indian' } });
+    const spec = Object.assign({}, DG.sample('counter', 'single'), { type: 'counter', variant: 'single', options: { live: false }, format: { digits: 'bn', grouping: 'indian' } });
     sb.DGHost.build(JSON.stringify(spec));
     const ex = ae.log.exprs.find(e => e.indexOf('FROM') >= 0);
     // eslint-disable-next-line no-new-func
     const out = new Function('effect', 'return eval(' + JSON.stringify(ex) + ')')(() => () => 100);
     try { assert.strictEqual(out, '১৭,৩০,০০,০০০'); passed++; } catch (e) { fail++; console.error('FAIL expression value', e.message); }
 }
+/* Evaluate live expressions with the slider values: must match the preview. */
+function evalExpr(ex, sliders, progress) {
+    const ctrlLayer = { effect: (n) => () => { if (!(n in sliders)) { throw new Error('no slider ' + n); } return sliders[n]; } };
+    // eslint-disable-next-line no-new-func
+    return new Function('thisComp', 'effect', 'time', 'clamp', 'return eval(' + JSON.stringify(ex) + ')')(
+        { layer: () => ctrlLayer }, () => () => progress, 1e9, (v, a, b) => Math.min(b, Math.max(a, v)));
+}
+const S2 = require('./load').load(['client/js/preview.js']);
+for (const [type, variant] of [['bar', 'column'], ['bar', 'horizontal'], ['bar', 'grouped'], ['pie', 'donut'], ['pie', 'semi'], ['pie', 'pie'], ['pie', 'rings'], ['counter', 'single'], ['counter', 'compare'], ['counter', 'cards']]) {
+    try {
+        const ae = makeAE(), sb = hostSandbox(ae);
+        sb.DGHost.init(EXT);
+        const spec = Object.assign({}, DG.sample(type, variant), { type, variant });
+        const res = sb.DGHost.build(JSON.stringify(spec));
+        assert.ok(res.indexOf('OK|') === 0, res);
+        const scene = sb.DG.build(JSON.parse(JSON.stringify(spec)));
+        assert.ok(scene.live && scene.live.cells.length > 0, 'no live cells');
+        const sliders = { 'Axis Max (0 = auto)': 0 };
+        for (const c of scene.live.cells) { sliders[c.name] = c.value; }
+        // every expression evaluates without error, no NaN
+        for (const ex of ae.log.exprs) {
+            if (ex.indexOf('DocuGraph live data') < 0) { continue; }
+            const v = evalExpr(ex, sliders, 100);
+            const flat = [].concat(v);
+            assert.ok(flat.every(x => typeof x === 'string' || Number.isFinite(x)), 'bad value ' + JSON.stringify(v) + ' from\n' + ex);
+        }
+        // live text at the end == preview text at the end
+        const liveTexts = scene.els.filter(e => e.type === 'text' && e.live);
+        const exprs = ae.log.textExprs.filter(t => t.expr.indexOf('DocuGraph live data') >= 0);
+        assert.strictEqual(exprs.length, liveTexts.length, 'live text count');
+        const want = liveTexts.map(e => S2.DGPreview.textString(e, scene.duration)).sort();
+        const got = exprs.map(t => evalExpr(t.expr, sliders, 100)).sort();
+        assert.deepStrictEqual(Array.from(got, String), Array.from(want, String));
+        // changing a slider changes the output
+        const first = scene.live.cells[0].name, before = exprs.map(t => evalExpr(t.expr, sliders, 100)).join('|');
+        sliders[first] = scene.live.cells[0].value * 1.5 + 1;
+        assert.notStrictEqual(exprs.map(t => evalExpr(t.expr, sliders, 100)).join('|'), before, 'slider had no effect');
+        passed++;
+    } catch (e) { fail++; console.error('FAIL live', type, variant, e.message.slice(0, 600)); }
+}
+/* Update in place: only DocuGraph layers are replaced, user layers survive */
+try {
+    const ae = makeAE(), sb = hostSandbox(ae);
+    sb.DGHost.init(EXT);
+    const spec = Object.assign({}, DG.sample('bar', 'column'), { type: 'bar', variant: 'column' });
+    assert.ok(sb.DGHost.build(JSON.stringify(spec)).indexOf('OK|') === 0);
+    const comp = sb.app.project.activeItem;
+    comp.comment = 'DocuGraph x\n{}';
+    comp.layers.addSolid().comment = 'mine';
+    const n1 = comp.numLayers;
+    spec.data += '\nNepal\t30';
+    const r = sb.DGHost.update(JSON.stringify(spec));
+    assert.ok(r.indexOf('OK|') === 0, r);
+    assert.ok(comp.list.some(l => l.comment === 'mine'), 'user layer removed');
+    assert.ok(comp.numLayers > 1 && comp.numLayers !== n1, 'layers not rebuilt');
+    assert.strictEqual(comp.list.filter(l => l.comment !== 'DocuGraph').length, 1);
+    passed++;
+} catch (e) { fail++; console.error('FAIL update', e.message); }
 console.log(`${passed} passed, ${fail} failed (mock AE render)`);
 if (fail) { process.exitCode = 1; }
