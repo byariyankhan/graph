@@ -87,8 +87,24 @@
             '><defs>' + defs.join('') + '</defs>' + out.join('') + '</svg>';
     };
 
+    /* Apply multi-key animations: returns a copy with animated props set. */
+    P.applyKeys = function (el, t) {
+        var c = null;
+        for (var i = 0; i < el.anims.length; i++) {
+            var a = el.anims[i];
+            if (a.kind !== 'keys') { continue; }
+            if (!c) { c = {}; for (var k in el) { if (el.hasOwnProperty(k)) { c[k] = el[k]; } } }
+            var v = DG.keysVal(a, t);
+            if (a.prop === 'w' && el.growDir === 'right') { c.w = v; } else if (a.prop === 'h' && el.growDir === 'up') { c.y = el.y + el.h - v; c.h = v; } else { c['k_' + a.prop] = v; if (a.prop === 'x' || a.prop === 'y' || a.prop === 'w' || a.prop === 'h') { c[a.prop] = v; } }
+        }
+        return c || el;
+    };
+
     P.el = function (el, ctx) {
+        el = P.applyKeys(el, ctx.t);
         var t = ctx.t, op = el.opacity === undefined ? 1 : el.opacity, tr = '', a, f;
+        if (el.k_op !== undefined) { op *= DG.clamp(el.k_op, 0, 1); }
+        if (el.k_tx || el.k_ty) { tr += 'translate(' + r2(el.k_tx || 0) + ' ' + r2(el.k_ty || 0) + ') '; }
         a = findA(el, 'fade');
         var dy = 0;
         if (a) { f = DG.animF(a, t); op *= DG.clamp(f, 0, 1); dy = (a.dy || 0) * (1 - f); }
@@ -192,6 +208,8 @@
     P.textString = function (el, t) {
         var a = findA(el, 'count');
         if (a) { return DG.fmt(DG.lerp(el.count.from, el.count.to, DG.animF(a, t)), el.count.fmt); }
+        var lv = findA(el, 'live');
+        if (lv) { return DG.liveText(lv, t); }
         var fl = findA(el, 'followLabel');
         if (fl && fl.vals) { return DG.fmt(DG.interp(fl.times, fl.vals, t), fl.fmt); }
         var ty = findA(el, 'type');

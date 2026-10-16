@@ -71,6 +71,17 @@ DG.SAMPLES = {
         data: 'Start\tEnd\tPeriod\n1352\t1576\tBengal Sultanate\n1576\t1757\tMughal Bengal\n1757\t1858\tCompany rule\n1858\t1947\tBritish Raj\n1947\t1971\tEast Pakistan\n1971\t2025\tBangladesh',
         options: {}, format: {}
     },
+    'race': {
+        title: 'The race to the top', subtitle: 'GDP, trillion US$ (rounded, illustrative)', source: 'Source: IMF / World Bank (sample)',
+        data: 'Year\tUSA\tChina\tJapan\tGermany\tIndia\tUK\tFrance\tBrazil\tItaly\n' +
+            '1980\t2.86\t0.19\t1.13\t0.95\t0.19\t0.60\t0.70\t0.24\t0.48\n' +
+            '1990\t5.96\t0.36\t3.13\t1.77\t0.32\t1.09\t1.27\t0.46\t1.18\n' +
+            '2000\t10.25\t1.21\t4.97\t1.95\t0.47\t1.66\t1.37\t0.66\t1.15\n' +
+            '2010\t15.05\t6.09\t5.76\t3.40\t1.68\t2.49\t2.65\t2.21\t2.14\n' +
+            '2020\t21.32\t14.69\t5.04\t3.89\t2.67\t2.70\t2.64\t1.48\t1.90\n' +
+            '2023\t27.36\t17.79\t4.21\t4.46\t3.55\t3.34\t3.03\t2.17\t2.25',
+        options: { highlight: 'India', periodSec: 1.6 }, format: { prefix: '$', suffix: 'T', decimals: 2 }
+    },
     'pyramid': {
         title: 'A young nation', subtitle: 'Population by age, % of total (illustrative)', source: 'Source: sample data',
         data: 'Age\tMale\tFemale\n0-9\t9.1\t8.8\n10-19\t9.4\t9.2\n20-29\t8.6\t8.9\n30-39\t7.4\t7.6\n40-49\t5.9\t5.8\n50-59\t4.2\t4.1\n60-69\t2.6\t2.7\n70+\t1.6\t1.8',

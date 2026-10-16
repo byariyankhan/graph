@@ -173,6 +173,28 @@ DG.interp = function (times, vals, t) {
     return vals[n - 1];
 };
 
+/* Multi-key animation ({kind:'keys', prop, times, vals, ease}): each segment
+ * between two keys is eased independently — exactly how After Effects
+ * interpolates keyframes that all have speed 0 (ease = null → linear). */
+DG.keysVal = function (a, t) {
+    var T = a.times, V = a.vals, n = T.length;
+    if (t <= T[0]) { return V[0]; }
+    if (t >= T[n - 1]) { return V[n - 1]; }
+    for (var k = 0; k < n - 1; k++) {
+        if (t < T[k + 1]) {
+            var dt = T[k + 1] - T[k], p = dt <= 0 ? 1 : (t - T[k]) / dt;
+            return V[k] + (V[k + 1] - V[k]) * DG.ease(a.ease, p);
+        }
+    }
+    return V[n - 1];
+};
+/* Text of a 'live' animation: interpolated number, or a label picked by index. */
+DG.liveText = function (a, t) {
+    var v = DG.interp(a.times, a.vals, t);
+    if (a.labels) { return a.labels[Math.max(0, Math.min(a.labels.length - 1, Math.floor(v + 1e-6)))]; }
+    return DG.fmt(v, a.fmt);
+};
+
 /* -------------------------------------------------------------------- data */
 
 DG.num = function (s) {
@@ -251,6 +273,21 @@ DG.seriesData = function (tb) {
         if (any) { keep.push(series[c]); }
     }
     return { cats: cats, series: keep };
+};
+/* Rows = entities & columns = years? Flip to rows = time (used by races). */
+DG.transposeIfWide = function (tb) {
+    if (tb.headers.length < 3 || tb.rows.length < 1) { return tb; }
+    var c, yearsInHeader = true;
+    for (c = 1; c < tb.headers.length; c++) { if (!DG.isNum(tb.headers[c])) { yearsInHeader = false; } }
+    if (!yearsInHeader || DG.isNum(tb.rows[0][0])) { return tb; }
+    var headers = [tb.headers[0] || 'Time'], rows = [], i;
+    for (i = 0; i < tb.rows.length; i++) { headers.push(tb.rows[i][0]); }
+    for (c = 1; c < tb.headers.length; c++) {
+        var r = [tb.headers[c]];
+        for (i = 0; i < tb.rows.length; i++) { r.push(tb.rows[i][c]); }
+        rows.push(r);
+    }
+    return { headers: headers, rows: rows };
 };
 DG.numOrNull = function (s) { var v = DG.num(s); return isNaN(v) ? null : v; };
 

@@ -37,6 +37,8 @@ function makeAE() {
         log.layers++;
         const l = prop('layer:' + kind);
         l.transform = { position: prop('pos'), anchorPoint: prop('anchor'), opacity: prop('opacity'), scale: prop('scale') };
+        const tkids = {};
+        l.transform.property = (n) => { if (!tkids[n]) { tkids[n] = prop(n); } return tkids[n]; };
         l.parent = null; l.locked = false;
         const tp = prop('ADBE Text Document'); tp.value = { resetCharStyle() {}, resetParagraphStyle() {} };
         Object.defineProperty(tp, 'expression', { set(v) { log.exprs.push(v); }, get() { return ''; } });

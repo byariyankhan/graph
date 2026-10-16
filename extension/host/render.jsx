@@ -67,6 +67,20 @@ var DGAE = (function () {
         setKeys(prop, keys, DG.easeDef(a.ease));
     }
 
+    /* Multi-key animation → keyframes; mapFn turns each value into the
+     * property value (e.g. a width into a rect size). */
+    function multiKeys(prop, a, mapFn) {
+        var keys = [];
+        for (var k = 0; k < a.times.length; k++) { keys.push([a.times[k], mapFn(a.vals[k])]); }
+        setKeys(prop, keys, DG.easeDef(a.ease));
+    }
+    function findKeys(el, propName) {
+        for (var i = 0; i < el.anims.length; i++) {
+            if (el.anims[i].kind === 'keys' && el.anims[i].prop === propName) { return el.anims[i]; }
+        }
+        return null;
+    }
+
     /* --------------------------------------------------------- shape layers */
 
     function newShapeLayer(name) {
@@ -137,6 +151,13 @@ var DGAE = (function () {
         var op = (el.opacity === undefined ? 1 : el.opacity) * 100;
         T.property('ADBE Vector Group Opacity').setValue(op);
         if ((a = findA(el, 'fade'))) { animKeys(T.property('ADBE Vector Group Opacity'), a, 0, op); }
+        if ((a = findKeys(el, 'op'))) {
+            multiKeys(gt(l, g).property('ADBE Vector Group Opacity'), a, function (v) { return v * op; });
+        }
+        var kx = findKeys(el, 'tx'), ky = findKeys(el, 'ty');
+        if (kx) { multiKeys(gt(l, g).property('ADBE Vector Position'), kx, function (v) { return [v, 0]; }); }
+        if (ky) { multiKeys(gt(l, g).property('ADBE Vector Position'), ky, function (v) { return [0, v]; }); }
+        T = gt(l, g);
         if ((a = findA(el, 'pop'))) {
             T.property('ADBE Vector Anchor').setValue(center);
             T.property('ADBE Vector Position').setValue(center);
@@ -161,6 +182,15 @@ var DGAE = (function () {
             if (a.dir === 'up') { s0 = [el.w, 0]; p0 = [cx, el.y + el.h]; } else if (a.dir === 'down') { s0 = [el.w, 0]; p0 = [cx, el.y]; } else if (a.dir === 'right') { s0 = [0, el.h]; p0 = [el.x, cy]; } else { s0 = [0, el.h]; p0 = [el.x + el.w, cy]; }
             animKeys(item(l, g, 'Rect').property('ADBE Vector Rect Size'), a, s0, [el.w, el.h]);
             animKeys(item(l, g, 'Rect').property('ADBE Vector Rect Position'), a, p0, [cx, cy]);
+        }
+        var kw = findKeys(el, 'w'), kh = findKeys(el, 'h');
+        if (kw) {
+            multiKeys(item(l, g, 'Rect').property('ADBE Vector Rect Size'), kw, function (v) { return [v, el.h]; });
+            multiKeys(item(l, g, 'Rect').property('ADBE Vector Rect Position'), kw, function (v) { return [el.x + v / 2, cy]; });
+        }
+        if (kh) {
+            multiKeys(item(l, g, 'Rect').property('ADBE Vector Rect Size'), kh, function (v) { return [el.w, v]; });
+            multiKeys(item(l, g, 'Rect').property('ADBE Vector Rect Position'), kh, function (v) { return [cx, el.y + el.h - v / 2]; });
         }
         groupAnims(l, g, el, [cx, cy]);
         return l;
@@ -293,6 +323,33 @@ var DGAE = (function () {
         }
         if ((a = findA(el, 'pop'))) { animKeys(l.transform.scale, a, [0, 0], [100, 100]); }
 
+        var ko = findKeys(el, 'op'), kxs = findKeys(el, 'x'), kys = findKeys(el, 'y'), ktx = findKeys(el, 'tx'), kty = findKeys(el, 'ty');
+        if (ko) { multiKeys(l.transform.opacity, ko, function (v) { return v * op; }); }
+        if (kxs || kys || ktx || kty) {
+            /* separate X / Y so each axis keeps its own easing */
+            l.transform.position.dimensionsSeparated = true;
+            var px = l.transform.property('ADBE Position_0'), py = l.transform.property('ADBE Position_1');
+            px.setValue(base[0]); py.setValue(base[1]);
+            if (kxs) { multiKeys(px, kxs, function (v) { return v - W / 2; }); }
+            if (ktx) { multiKeys(px, ktx, function (v) { return base[0] + v; }); }
+            if (kys) { multiKeys(py, kys, function (v) { return v - H / 2; }); }
+            if (kty) { multiKeys(py, kty, function (v) { return base[1] + v; }); }
+        }
+        var lv = findA(el, 'live');
+        if (lv) {
+            if (lv.labels) {
+                tp.expression = '// DocuGraph period label\n' +
+                    'var T = ' + DG.toJSON(lv.times) + ', V = ' + DG.toJSON(lv.vals) + ', L = ' + DG.toJSON(lv.labels) + ';\n' +
+                    'var v = V[0]; for (var k = 0; k < T.length; k++) { if (time >= T[k]) { v = V[k]; } }\n' +
+                    'L[Math.max(0, Math.min(L.length - 1, Math.floor(v + 1e-6)))];';
+            } else {
+                tp.expression = '// DocuGraph live value (linear between keys)\n' +
+                    'var T = ' + DG.toJSON(lv.times) + ', V = ' + DG.toJSON(lv.vals) + ';\n' +
+                    'var v = V[0];\n' +
+                    'if (time >= T[T.length - 1]) { v = V[V.length - 1]; } else { for (var k = 0; k < T.length - 1; k++) { if (time < T[k + 1]) { v = time <= T[k] ? V[k] : V[k] + (V[k + 1] - V[k]) * (time - T[k]) / (T[k + 1] - T[k]); break; } } }\n' +
+                    exprFmt('v', lv.fmt) + ';';
+            }
+        }
         var cnt = findA(el, 'count'), ty = findA(el, 'type'), fl = findA(el, 'followLabel');
         if (cnt || ty) {
             var sl = l.property('ADBE Effect Parade').addProperty('ADBE Slider Control');

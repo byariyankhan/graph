@@ -36,7 +36,7 @@
 
 | # | টাইপ | ভ্যারিয়েন্ট |
 |---|---|---|
-| 7 | **Bar Chart Race** | Horizontal race · Column race · Line race (৩) |
+| 7 | **Bar Chart Race** ✅ | Horizontal race ✅ · Column race ✅ · Line race (৩) |
 | 8 | **Scatter / Bubble** | Scatter · Bubble · Gapminder (সময়ের সাথে চলমান) (৩) |
 | 9 | **Pictogram / Waffle** | Waffle 10×10 · Icon array (মানুষ আইকন) · Proportional circles (৩) |
 | 10 | **Comparison** | Dumbbell · Slope · Waterfall · Before/After (৪) |
@@ -110,7 +110,9 @@ tests/                     ইঞ্জিন টেস্ট, ES3 লিন্�
 - [x] লাইভ প্রিভিউ প্যানেল (প্লে/স্ক্রাব)
 - [x] AE রেন্ডারার (Shape/Text লেয়ার, কিফ্রেম, কাউন্ট-আপ এক্সপ্রেশন, কন্ট্রোলার নাল)
 - [x] টেস্ট: ৪৮০টি বিল্ড (টাইপ × ভ্যারিয়েন্ট × থিম × সাইজ), ES3 লিন্ট, mock-AE
-- [ ] **আসল After Effects-এ পরীক্ষা** (পরবর্তী জরুরি ধাপ)
-- [ ] ধাপ ২: Bar race, Scatter/Bubble, Waffle, Comparison, Gauge, অ্যানোটেশন, re-edit
+- [x] আসল After Effects-এ প্যানেল কানেক্ট হয় (AE 26.3)
+- [x] "DG is undefined" বাগ ঠিক করা হয়েছে
+- [x] Bar Chart Race (horizontal + column)
+- [ ] ধাপ ২ বাকি: Scatter/Bubble, Waffle, Comparison, Gauge, অ্যানোটেশন, re-edit
 - [ ] ধাপ ৩: ম্যাপ, Treemap, Sankey, Radar
 - [ ] সাইন করা ZXP প্যাকেজ
