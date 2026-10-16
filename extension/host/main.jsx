@@ -32,12 +32,27 @@ DGHost.init = function (extPath) {
     }
 };
 
+/* The DocuGraph comp to edit: the open comp itself, or the comp behind the
+ * selected layer (when the chart sits as a precomp inside your edit). */
+DGHost.isDG = function (c) { return c && (c instanceof CompItem) && String(c.comment).indexOf('DocuGraph') === 0; };
+DGHost.target = function () {
+    var c = app.project.activeItem;
+    if (DGHost.isDG(c)) { return c; }
+    if (c && (c instanceof CompItem)) {
+        var sel = c.selectedLayers;
+        for (var i = 0; i < sel.length; i++) { if (sel[i].source && DGHost.isDG(sel[i].source)) { return sel[i].source; } }
+    }
+    return null;
+};
+
 DGHost.build = function (specJson) {
     try {
         if (!DGHost.ready) { var r = DGHost.init(); if (r.indexOf('OK') !== 0) { return r; } }
         var spec = DG.parseJSON(specJson);
         var scene = DG.build(spec);
-        return DGAE.render(scene, specJson);
+        var host = app.project.activeItem;
+        if (!spec.insert || !host || !(host instanceof CompItem) || DGHost.isDG(host)) { host = null; }
+        return DGAE.render(scene, specJson, null, host);
     } catch (e) {
         return 'ERR|' + e.toString() + (e.line ? ' (line ' + e.line + ')' : '');
     }
@@ -48,10 +63,8 @@ DGHost.build = function (specJson) {
 DGHost.update = function (specJson) {
     try {
         if (!DGHost.ready) { var r = DGHost.init(); if (r.indexOf('OK') !== 0) { return r; } }
-        var c = app.project.activeItem;
-        if (!c || !(c instanceof CompItem) || String(c.comment).indexOf('DocuGraph') !== 0) {
-            return 'ERR|Select (open) a DocuGraph comp first';
-        }
+        var c = DGHost.target();
+        if (!c) { return 'ERR|Open a DocuGraph comp, or select its layer in your comp'; }
         return DGAE.render(DG.build(DG.parseJSON(specJson)), specJson, c);
     } catch (e) {
         return 'ERR|' + e.toString() + (e.line ? ' (line ' + e.line + ')' : '');
@@ -61,8 +74,8 @@ DGHost.update = function (specJson) {
 /* Read the spec back from a DocuGraph comp (to re-edit a chart). */
 DGHost.readActive = function () {
     try {
-        var c = app.project.activeItem;
-        if (!c || !(c instanceof CompItem) || String(c.comment).indexOf('DocuGraph') !== 0) { return 'NONE|'; }
+        var c = DGHost.target();
+        if (!c) { return 'NONE|'; }
         var body = String(c.comment).substring(String(c.comment).indexOf('\n') + 1), out = '', i, ch, h;
         /* escape non-ASCII so Bangla survives the trip back to the panel */
         for (i = 0; i < body.length; i++) {

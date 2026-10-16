@@ -18,7 +18,7 @@
         type: 'bar', variant: 'column', theme: 'docDark', size: '1920x1080', fps: 30, duration: 10,
         title: '', subtitle: '', source: '', credit: '', data: '',
         options: { highlight: '', sort: 'none', colorBy: 'single', values: true, grid: true, axis: true, endLabels: true, live: true },
-        dataMode: 'table',
+        dataMode: 'table', insert: true,
         format: { prefix: '', suffix: '', decimals: '', grouping: 'intl', digits: 'latin', compact: 'none' },
         style: { hiOn: false, hi: '#E8B04B', fTitle: '', fBody: '', fBnBold: '', fBnBody: '' },
         anim: { speed: 1, stagger: 0.12, ease: 'out', titleAnim: 'fade', overshoot: true },
@@ -66,7 +66,7 @@
             },
             format: f,
             style: { hi: st.hiOn ? st.hi : '', fonts: fonts },
-            panel: state,
+            panel: state, insert: state.insert !== false,
             anim: {
                 speed: Number(state.anim.speed), stagger: Number(state.anim.stagger), ease: state.anim.ease,
                 titleAnim: state.anim.titleAnim, overshoot: !!state.anim.overshoot
@@ -145,7 +145,7 @@
         fBnBold: 'style.fBnBold', fBnBody: 'style.fBnBody', title: 'title', subtitle: 'subtitle', source: 'source', credit: 'credit',
         prefix: 'format.prefix', suffix: 'format.suffix', decimals: 'format.decimals', grouping: 'format.grouping',
         digits: 'format.digits', compact: 'format.compact', speed: 'anim.speed', stagger: 'anim.stagger', ease: 'anim.ease',
-        titleAnim: 'anim.titleAnim', duration: 'duration', overshoot: 'anim.overshoot'
+        titleAnim: 'anim.titleAnim', duration: 'duration', overshoot: 'anim.overshoot', insert: 'insert'
     };
     function getPath(p) { return p.split('.').reduce(function (o, k) { return o == null ? o : o[k]; }, state); }
     function setPath(p, v) {
@@ -160,8 +160,60 @@
             if (el.type === 'checkbox') { el.checked = !!v; } else { el.value = v === undefined || v === null ? '' : v; }
         });
         $('speedV').textContent = '×' + Number(state.anim.speed).toFixed(1);
-        renderTypes(); renderThemes(); renderGrid(); info();
+        renderTypes(); renderThemes(); renderGrid(); renderGallery(); info();
     }
+
+    /* ------------------------------------------------ gallery (Motion Bro style) */
+    var gScenes = {}, gKey = '', gPlay = null;
+    function renderGallery() {
+        var key = state.theme + '|' + (state.style.hiOn ? state.style.hi : '');
+        if (key !== gKey) {
+            gKey = key; gScenes = {};
+            var html = [];
+            TYPES.forEach(function (ty) {
+                (DG.VARIANTS[ty.id] || []).forEach(function (v) {
+                    var smp = DG.sample(ty.id, v.id);
+                    var sc = DG.build(Object.assign({}, smp, { type: ty.id, variant: v.id, theme: state.theme, width: 960, height: 540, style: { hi: state.style.hiOn ? state.style.hi : '' } }));
+                    var id = ty.id + ':' + v.id;
+                    gScenes[id] = sc;
+                    html.push('<div class="gcard" data-id="' + id + '"><div class="th">' + PV.render(sc, sc.duration) + '</div><div class="gl"><b>' + ty.label + '</b> · ' + v.label + '</div></div>');
+                });
+            });
+            $('gallery').innerHTML = html.join('');
+        }
+        [].forEach.call(document.querySelectorAll('.gcard'), function (c) { c.classList.toggle('on', c.dataset.id === state.type + ':' + state.variant); });
+    }
+    function stopThumb() {
+        if (!gPlay) { return; }
+        var sc = gScenes[gPlay.id];
+        gPlay.el.querySelector('.th').innerHTML = PV.render(sc, sc.duration);
+        gPlay = null;
+    }
+    $('gallery').addEventListener('mouseover', function (e) {
+        var c = e.target.closest('.gcard');
+        if (!c || (gPlay && gPlay.el === c)) { return; }
+        stopThumb();
+        gPlay = { el: c, id: c.dataset.id, t0: performance.now() };
+        var me = gPlay;
+        (function loop(now) {
+            if (gPlay !== me) { return; }
+            var sc = gScenes[me.id], t = ((now - me.t0) / 1000) % (sc.duration + 0.5);
+            c.querySelector('.th').innerHTML = PV.render(sc, Math.min(t, sc.duration));
+            requestAnimationFrame(loop);
+        }(performance.now()));
+    });
+    $('gallery').addEventListener('mouseleave', stopThumb);
+    $('gallery').addEventListener('click', function (e) {
+        var c = e.target.closest('.gcard');
+        if (!c) { return; }
+        var parts = c.dataset.id.split(':'), before = DG.sample(state.type, state.variant);
+        var sameType = parts[0] === state.type;
+        state.type = parts[0]; state.variant = parts[1];
+        var after = DG.sample(state.type, state.variant);
+        /* keep the user's own data when only the style of the same type changes */
+        if (!sameType || (before && state.data === before.data && before !== after)) { applySample(); }
+        fillForm(); rebuild();
+    });
 
     /* ------------------------------------------------- table data editor */
     function toRows() {
@@ -303,7 +355,9 @@
         call().then(function (res) {
             btn.disabled = false;
             var p = res.split('|');
-            if (p[0] === 'OK') { setStatus('✓ ' + verb + ' "' + p[1] + '" (' + p[3] + ' layers)', 'ok'); } else { setStatus(p.slice(1).join('|') || res, 'err'); }
+            if (p[0] === 'OK') {
+                setStatus('✓ ' + verb + ' "' + p[1] + '"' + (p[4] ? ' → added to "' + p[4] + '"' : '') + (p[5] && p[5] !== '0' ? ' · ' + p[5] + ' Essential Properties' : ''), 'ok');
+            } else { setStatus(p.slice(1).join('|') || res, 'err'); }
         });
     }
     $('create').addEventListener('click', function () { run('create', function () { return Host.build(spec()); }, 'Created'); });
@@ -312,13 +366,13 @@
         if (!Host.available) { setStatus('Open this panel inside After Effects to do this', 'err'); return; }
         Host.readActive().then(function (res) {
             var i = res.indexOf('|'), tag = res.substring(0, i), body = res.substring(i + 1);
-            if (tag !== 'OK') { setStatus(tag === 'NONE' ? 'Open a DocuGraph comp in the timeline first' : body, 'err'); return; }
+            if (tag !== 'OK') { setStatus(tag === 'NONE' ? 'Select the chart layer in your comp (or open the chart comp) first' : body, 'err'); return; }
             try {
                 var sp = JSON.parse(body);
                 if (!sp.panel) { setStatus('This comp was made by an older version — settings could not be loaded', 'err'); return; }
                 state = Object.assign(JSON.parse(JSON.stringify(DEFAULT)), sp.panel);
                 fillForm(); rebuild();
-                setStatus('✓ Loaded settings from the comp — edit, then “Update open comp”', 'ok');
+                setStatus('✓ Loaded the chart — edit, then “Update chart”', 'ok');
             } catch (e) { setStatus('Could not read comp settings: ' + e.message, 'err'); }
         });
     });

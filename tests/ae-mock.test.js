@@ -9,7 +9,7 @@ const vm = require('vm');
 const { EXT } = require('./load');
 
 function makeAE() {
-    const log = { layers: 0, props: 0, keys: 0, exprs: [], textExprs: [], badValues: [] };
+    const log = { layers: 0, props: 0, keys: 0, exprs: [], textExprs: [], badValues: [], egp: [], colorExprs: 0 };
     function checkVal(v, where) {
         const flat = Array.isArray(v) ? v.flat(3) : [v];
         for (const x of flat) { if (typeof x === 'number' && !Number.isFinite(x)) { log.badValues.push(where); } }
@@ -21,7 +21,9 @@ function makeAE() {
             property(n) { if (!kids[n]) { kids[n] = prop(n); } return kids[n]; },
             addProperty(m) { log.props++; const c = prop(m); kids[m + '#' + log.props] = c; const proxy = c; setTimeout(() => {}, 0); return trackName(proxy, kids); },
             setValue(v) { checkVal(v, name); },
-            set expression(v) { log.exprs.push(v); }, get expression() { return ''; },
+            set expression(v) { log.exprs.push(v); if (/effect\(".*"\)\(1\)$/.test(v) && v.indexOf('DG Controller') >= 0) { log.colorExprs++; } }, get expression() { return ''; },
+            canAddToMotionGraphicsTemplate() { return true; },
+            addToMotionGraphicsTemplateAs(c, n) { assert.ok(c && typeof n === 'string' && n.length); log.egp.push(n); },
             setValueAtTime(t, v) { assert.ok(Number.isFinite(t), 'key time NaN on ' + name); checkVal(v, name + '@' + t); log.keys++; this.numKeys++; },
             nearestKeyIndex() { return 1; },
             setTemporalEaseAtKey(i, a, b) { assert.ok(a.length >= 1 && b.length === a.length); for (const e of a.concat(b)) { assert.ok(e.influence >= 0.1 && e.influence <= 100, 'influence ' + e.influence); } },
@@ -34,7 +36,7 @@ function makeAE() {
     function trackName(c, kids) {
         return new Proxy(c, { set(o, k, v) { o[k] = v; if (k === 'name') { kids[v] = o; } return true; } });
     }
-    function layer(kind) {
+    function layer(kind, comp) {
         log.layers++;
         const l = prop('layer:' + kind);
         l.transform = { position: prop('pos'), anchorPoint: prop('anchor'), opacity: prop('opacity'), scale: prop('scale') };
@@ -52,35 +54,38 @@ function makeAE() {
         l.property = (n) => n === 'ADBE Text Properties' ? { property: () => tp } : orig(n);
         return l;
     }
-    const comp = Object.assign(Object.create({}), {
-        name: '', numLayers: 0, comment: '', bgColor: null, list: [], layer(i) { return comp.list[i - 1]; },
-        layers: {
-            addShape() { comp.numLayers++; return layer('shape'); },
-            addText(s) { comp.numLayers++; assert.ok(typeof s === 'string'); const l = layer('text'); l.initialText = s; return l; },
-            addSolid() { comp.numLayers++; return layer('solid'); },
-            addNull() { comp.numLayers++; return layer('null'); }
-        },
-        openInViewer() {}
-    });
+    const CompItem = function CompItem() {};
+    function makeComp(name, w, h) {
+        const comp = Object.assign(Object.create(CompItem.prototype), {
+            name, width: w || 1920, height: h || 1080, time: 2, numLayers: 0, comment: '', bgColor: null, list: [], selectedLayers: [],
+            layer(i) { return comp.list[i - 1]; },
+            layers: {
+                addShape() { comp.numLayers++; return layer('shape', comp); },
+                addText(s) { comp.numLayers++; assert.ok(typeof s === 'string'); const l = layer('text', comp); l.initialText = s; return l; },
+                addSolid() { comp.numLayers++; return layer('solid', comp); },
+                addNull() { comp.numLayers++; return layer('null', comp); },
+                add(src) { comp.numLayers++; const l = layer('precomp', comp); l.source = src; return l; }
+            },
+            openInViewer() {}
+        });
+        return comp;
+    }
     function FolderItem() {}
     const app = {
         version: '24.0-mock', project: {
             numItems: 0, item() { return null; },
             items: {
-                addComp(name, w, h, par, dur, fps) { assert.ok(w > 0 && h > 0 && dur > 0 && fps > 0); comp.name = name; app.project.activeItem = comp; return comp; },
+                addComp(name, w, h, par, dur, fps) { assert.ok(w > 0 && h > 0 && dur > 0 && fps > 0); const c = makeComp(name, w, h); log.lastComp = c; return c; },
                 addFolder() { return new FolderItem(); }
             }
         },
         beginUndoGroup() {}, endUndoGroup() {}
     };
     function Shape() { this.vertices = []; }
-    const CompItem = function CompItem() {};
-    Object.setPrototypeOf(comp, CompItem.prototype);
-    comp.constructor = CompItem;
     function KeyframeEase(speed, influence) { this.speed = speed; this.influence = influence; }
     return {
-        log, globals: {
-            app, Shape, KeyframeEase, FolderItem, CompItem: comp.constructor,
+        log, makeComp, globals: {
+            app, Shape, KeyframeEase, FolderItem, CompItem,
             KeyframeInterpolationType: { LINEAR: 6612, BEZIER: 6613 },
             PropertyValueType: { OneD: 1, TwoD: 2, ThreeD: 3, TwoD_SPATIAL: 4, ThreeD_SPATIAL: 5, COLOR: 6 },
             ParagraphJustification: { LEFT_JUSTIFY: 1, CENTER_JUSTIFY: 2, RIGHT_JUSTIFY: 3 },
@@ -186,7 +191,8 @@ try {
     sb.DGHost.init(EXT);
     const spec = Object.assign({}, DG.sample('bar', 'column'), { type: 'bar', variant: 'column' });
     assert.ok(sb.DGHost.build(JSON.stringify(spec)).indexOf('OK|') === 0);
-    const comp = sb.app.project.activeItem;
+    const comp = ae.log.lastComp;
+    sb.app.project.activeItem = comp;
     comp.comment = 'DocuGraph x\n{}';
     comp.layers.addSolid().comment = 'mine';
     const n1 = comp.numLayers;
@@ -198,5 +204,27 @@ try {
     assert.strictEqual(comp.list.filter(l => l.comment !== 'DocuGraph').length, 1);
     passed++;
 } catch (e) { fail++; console.error('FAIL update', e.message); }
+/* Motion-Bro style: insert into the active comp, Essential Graphics, edit via selected layer */
+try {
+    const ae = makeAE(), sb = hostSandbox(ae);
+    sb.DGHost.init(EXT);
+    const edit = ae.makeComp('My Edit', 3840, 2160);
+    sb.app.project.activeItem = edit;
+    const spec = Object.assign({}, DG.sample('pie', 'donut'), { type: 'pie', variant: 'donut', insert: true });
+    const res = sb.DGHost.build(JSON.stringify(spec));
+    assert.ok(res.indexOf('OK|') === 0, res);
+    assert.strictEqual(res.split('|')[4], 'My Edit', 'not inserted: ' + res);
+    const L = edit.list.find(l => l.source === ae.log.lastComp);
+    assert.ok(L, 'precomp layer missing');
+    for (const n of ['Title', 'Subtitle', 'Source', 'Text', 'Background', 'Chart Scale']) { assert.ok(ae.log.egp.includes(n), 'EGP missing ' + n + ' in ' + ae.log.egp); }
+    assert.ok(ae.log.egp.includes('Natural gas'), 'data slider not in EGP');
+    assert.ok(ae.log.colorExprs > 10, 'colours not linked: ' + ae.log.colorExprs);
+    // select the precomp layer in the edit → Load / Update find the chart comp
+    ae.log.lastComp.comment = 'DocuGraph x\n' + JSON.stringify(spec);
+    edit.selectedLayers = [L];
+    assert.ok(sb.DGHost.readActive().indexOf('OK|') === 0, 'readActive via selected layer');
+    assert.ok(sb.DGHost.update(JSON.stringify(spec)).indexOf('OK|') === 0, 'update via selected layer');
+    passed++;
+} catch (e) { fail++; console.error('FAIL insert/EGP', e.message); }
 console.log(`${passed} passed, ${fail} failed (mock AE render)`);
 if (fail) { process.exitCode = 1; }

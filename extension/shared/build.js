@@ -61,7 +61,7 @@ DG.build = function (specIn) {
     return {
         name: spec.name || DG.compName(spec), width: W, height: H, fps: Number(spec.fps) || 30, duration: dur,
         bg: th.bg, bg2: th.bg2, transparent: spec.background === 'transparent', glow: th.glow,
-        theme: spec.theme, els: ctx.els, dataEnd: end, live: DG.liveInfo(ctx.cells)
+        theme: spec.theme, els: ctx.els, dataEnd: end, live: DG.liveInfo(ctx.cells), colorRoles: DG.colorRoles(th)
     };
 };
 
@@ -82,6 +82,16 @@ DG.liveInfo = function (cells) {
         out.push({ name: nm + suf, value: (cells[i].value || 0) / factor });
     }
     return { cells: out, factor: factor };
+};
+
+/* Names for the colour controls in AE (first matching role wins). */
+DG.colorRoles = function (th) {
+    var r = [['Highlight', th.hi], ['Accent', th.accent], ['Text', th.text], ['Muted Text', th.muted]], i;
+    for (i = 0; i < th.palette.length; i++) { r.push(['Color ' + (i + 1), th.palette[i]]); }
+    r.push(['Dimmed', th.dim], ['Grid', th.grid], ['Axis', th.axis], ['Card', th.card], ['Background', th.bg]);
+    if (th.bg2) { r.push(['Background Glow', th.bg2]); }
+    r.push(['Light Labels', '#FFFFFF'], ['Dark Labels', '#111111'], ['Year Labels', '#E6E6E6'], ['Year Labels Dark', '#333333']);
+    return r;
 };
 
 DG.compName = function (spec) {

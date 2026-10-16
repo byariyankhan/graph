@@ -22,7 +22,8 @@
     </section>
 
     <nav class="tabs" id="tabs">
-        <button data-tab="chart" class="on">Chart</button>
+        <button data-tab="gallery" class="on">Gallery</button>
+        <button data-tab="chart">Chart</button>
         <button data-tab="data">Data</button>
         <button data-tab="style">Style</button>
         <button data-tab="text">Text &amp; Numbers</button>
@@ -31,7 +32,12 @@
 
     <main class="pages">
         <!-- CHART -->
-        <div class="page on" id="page-chart">
+        <div class="page on" id="page-gallery">
+            <p class="hint">Hover to play · click to use. Theme from the Style tab applies to all.</p>
+            <div id="gallery" class="gallery"></div>
+        </div>
+
+        <div class="page" id="page-chart">
             <label class="lbl">Chart type</label>
             <div id="types" class="types"></div>
             <label class="lbl">Variant</label>
@@ -49,6 +55,7 @@
                     <option>24</option><option>25</option><option selected>30</option><option>50</option><option>60</option>
                 </select>
             </div>
+            <label class="mini live"><input type="checkbox" id="insert" checked> <b>Add to the open comp</b> at the playhead (as a precomp). Edit it later from the layer's <b>Essential Properties</b> — title, colours and data.</label>
         </div>
 
         <!-- DATA -->
@@ -154,8 +161,8 @@
     <footer class="foot">
         <button id="create" class="primary">Create new comp</button>
         <div class="row">
-            <button id="loadComp" class="ghost wide" title="Open a DocuGraph comp, then load its settings here">⤓ Load from open comp</button>
-            <button id="update" class="ghost wide" title="Rebuild the chart inside the open DocuGraph comp">⟳ Update open comp</button>
+            <button id="loadComp" class="ghost wide" title="Select the chart layer (or open its comp), then load its settings here">⤓ Load selected chart</button>
+            <button id="update" class="ghost wide" title="Rebuild the selected / open DocuGraph chart">⟳ Update chart</button>
         </div>
     </footer>
 

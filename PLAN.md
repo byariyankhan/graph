@@ -116,7 +116,13 @@ tests/                     ইঞ্জিন টেস্ট, ES3 লিন্�
 - [x] **লাইভ ডেটা:** AE-তে `DG Controller`-এর স্লাইডার বদলালে চার্ট নিজেই বদলায় (Bar, Pie/Donut, Big Number)
 - [x] **Update open comp:** কম্প থেকে সেটিংস লোড → এডিট → একই কম্পে আপডেট
 - [x] টেবিল ডেটা এডিটর (Excel থেকে পেস্টও চলে)
+- [x] **Motion Bro স্টাইল ওয়ার্কফ্লো:**
+  - Gallery: সব স্টাইলের অ্যানিমেটেড থাম্বনেইল (hover = play, click = use)
+  - Create চাপলে চার্ট খোলা কম্পে প্লেহেডে precomp হিসেবে বসে
+  - Essential Properties: Title / Subtitle / Source, সব রঙ (Color Controls), ডেটা স্লাইডার, Chart Scale / Position
+  - মেইন কম্পে চার্ট লেয়ার সিলেক্ট করে Load → এডিট → Update
 - [ ] লাইভ ডেটা: Line, Stacked, Timeline, Pyramid
+- [ ] Essential Properties-এ ফন্ট বদল (AE 2024+ API যাচাই সাপেক্ষে)
 - [ ] ধাপ ২ বাকি: Scatter/Bubble, Waffle, Comparison, Gauge, অ্যানোটেশন, re-edit
 - [ ] ধাপ ৩: ম্যাপ, Treemap, Sankey, Radar
 - [ ] সাইন করা ZXP প্যাকেজ

@@ -12,7 +12,7 @@
  *     the whole chart can be moved / scaled at once
  */
 var DGAE = (function () {
-    var comp, ctrl, W, H, layerMap, nameCount, glowDone, LIVE;
+    var comp, ctrl, W, H, layerMap, nameCount, glowDone, LIVE, COLORS, EGP_TEXT;
     var AXIS_MAX = 'Axis Max (0 = auto)';
 
     function P(x, y) { return [x - W / 2, y - H / 2]; }
@@ -199,14 +199,65 @@ var DGAE = (function () {
         return makeShape([[cx, cy - r], [cx + r, cy], [cx, cy + r], [cx - r, cy]],
             [[-k, 0], [0, -k], [k, 0], [0, k]], [[k, 0], [0, k], [-k, 0], [0, -k]], true);
     }
+    /* ---------------------------------------------------------------- colours
+     * Every colour used becomes a Color Control on DG Controller (named by
+     * its theme role: Text, Accent, Color 1 …). Fills, strokes and text
+     * follow those controls by expression, so one change recolours the whole
+     * chart — and the controls are exposed in Essential Graphics. */
+    function hexKey(hex) { return String(hex).toUpperCase(); }
+    function setupColors(scene) {
+        COLORS = { byHex: {}, order: [] };
+        var used = {}, i, el, k;
+        var mark = function (h) { if (h) { used[hexKey(h)] = true; } };
+        for (i = 0; i < scene.els.length; i++) { el = scene.els[i]; mark(el.fill); mark(el.stroke); if (el.type === 'text') { mark(el.color); } }
+        if (!scene.transparent) { mark(scene.bg); if (scene.bg2) { mark(scene.bg2); } }
+        var roles = scene.colorRoles || [], taken = {};
+        for (i = 0; i < roles.length; i++) {
+            k = hexKey(roles[i][1]);
+            if (used[k] && !COLORS.byHex.hasOwnProperty(k) && !taken[roles[i][0]]) { COLORS.byHex[k] = roles[i][0]; taken[roles[i][0]] = true; COLORS.order.push(k); }
+        }
+        var extra = 1;
+        for (k in used) {
+            if (used.hasOwnProperty(k) && !COLORS.byHex.hasOwnProperty(k)) { COLORS.byHex[k] = 'Color ' + k.replace('#', ''); COLORS.order.push(k); extra++; }
+        }
+        var fx = ctrl.property('ADBE Effect Parade');
+        for (i = 0; i < COLORS.order.length; i++) {
+            var c = fx.addProperty('ADBE Color Control');
+            c.name = COLORS.byHex[COLORS.order[i]];
+            ctrl.property('ADBE Effect Parade').property(COLORS.byHex[COLORS.order[i]]).property(1).setValue(rgba(COLORS.order[i]));
+        }
+    }
+    function colorExpr(hex) {
+        if (!COLORS || !COLORS.byHex.hasOwnProperty(hexKey(hex))) { return null; }
+        return 'thisComp.layer("DG Controller").effect(' + DG.quote(COLORS.byHex[hexKey(hex)]) + ')(1)';
+    }
+    function linkColor(prop, hex) {
+        var e = colorExpr(hex);
+        if (e) { try { prop.expression = e; } catch (err) { /* keep static colour */ } }
+    }
+    /* "Fill" effect drives a layer's colour (text, background) from a control. */
+    function fillEffect(l, hex) {
+        if (!colorExpr(hex)) { return; }
+        try {
+            l.property('ADBE Effect Parade').addProperty('ADBE Fill');
+            var fe = l.property('ADBE Effect Parade').property('ADBE Fill');
+            for (var i = 1; i <= fe.numProperties; i++) {
+                var pr = fe.property(i);
+                if (pr.propertyValueType === PropertyValueType.COLOR) { pr.setValue(rgba(hex)); linkColor(pr, hex); break; }
+            }
+        } catch (e) { /* optional */ }
+    }
+
     function setFill(l, g, hex, opacity) {
         var f = item(l, g, 'Fill');
         f.property('ADBE Vector Fill Color').setValue(rgba(hex));
+        linkColor(item(l, g, 'Fill').property('ADBE Vector Fill Color'), hex);
         f.property('ADBE Vector Fill Opacity').setValue(opacity === undefined ? 100 : opacity * 100);
     }
     function setStroke(l, g, el, colorHex, width, cap) {
         var s = item(l, g, 'Stroke');
         s.property('ADBE Vector Stroke Color').setValue(rgba(colorHex));
+        linkColor(s.property('ADBE Vector Stroke Color'), colorHex);
         s.property('ADBE Vector Stroke Width').setValue(width);
         s.property('ADBE Vector Stroke Line Cap').setValue(cap === 'round' ? 2 : 1);
         s.property('ADBE Vector Stroke Line Join').setValue(el.join === 'miter' ? 1 : 2);
@@ -420,6 +471,8 @@ var DGAE = (function () {
         td.tracking = el.track || 0;
         tp.setValue(td);
 
+        fillEffect(l, el.color);
+        if (el.name === 'Title' || el.name === 'Subtitle' || el.name === 'Source' || el.name === 'Credit') { EGP_TEXT[el.name] = l; }
         var base = P(el.x, el.y), a;
         l.transform.position.setValue(base);
         var op = (el.opacity === undefined ? 1 : el.opacity) * 100;
@@ -476,7 +529,7 @@ var DGAE = (function () {
                     'var p = effect("Progress")(1) / 100;\n' +
                     exprFmt('FROM + (TO - FROM) * p', el.count.fmt) + ';';
             } else {
-                tp.expression = '// DocuGraph typewriter\nvar s = ' + DG.quote(el.text) + ';\n' +
+                tp.expression = '// DocuGraph typewriter (edit the text normally)\nvar s = value.toString();\n' +
                     's.substr(0, Math.round(s.length * clamp(effect("Progress")(1) / 100, 0, 1)));';
             }
         }
@@ -498,6 +551,46 @@ var DGAE = (function () {
 
     /* --------------------------------------------------------------- render */
 
+    /* Essential Graphics: expose title texts, colours and data sliders, so the
+     * chart is edited from the precomp layer's Essential Properties in the
+     * parent comp (the Motion Bro workflow). Needs AE 2019+; skipped quietly
+     * on older versions. */
+    function addEGP(scene) {
+        var added = 0, i, fx;
+        function egp(prop, name) {
+            try {
+                if (prop.canAddToMotionGraphicsTemplate && !prop.canAddToMotionGraphicsTemplate(comp)) { return; }
+                prop.addToMotionGraphicsTemplateAs(comp, name); added++;
+            } catch (e) { /* unsupported property / version */ }
+        }
+        try { comp.motionGraphicsTemplateName = comp.name; } catch (e0) { return 0; }
+        var order = ['Title', 'Subtitle', 'Source', 'Credit'];
+        for (i = 0; i < order.length; i++) {
+            if (EGP_TEXT[order[i]]) { egp(EGP_TEXT[order[i]].property('ADBE Text Properties').property('ADBE Text Document'), order[i]); }
+        }
+        fx = ctrl.property('ADBE Effect Parade');
+        if (COLORS) { for (i = 0; i < COLORS.order.length; i++) { egp(fx.property(COLORS.byHex[COLORS.order[i]]).property(1), COLORS.byHex[COLORS.order[i]]); } }
+        if (LIVE) {
+            for (i = 0; i < LIVE.cells.length; i++) { egp(ctrl.property('ADBE Effect Parade').property(LIVE.cells[i].name).property(1), LIVE.cells[i].name); }
+            if (ctrl.property('ADBE Effect Parade').property(AXIS_MAX)) { egp(ctrl.property('ADBE Effect Parade').property(AXIS_MAX).property(1), AXIS_MAX); }
+        }
+        egp(ctrl.transform.scale, 'Chart Scale');
+        egp(ctrl.transform.position, 'Chart Position');
+        return added;
+    }
+
+    /* Drop the chart comp into the user's comp at the playhead (like Motion Bro). */
+    function insertInto(host) {
+        if (!host || host === comp) { return null; }
+        var L = host.layers.add(comp);
+        L.startTime = host.time;
+        var sc = Math.min(host.width / W, host.height / H) * 100;
+        if (Math.abs(sc - 100) > 0.01) { L.transform.scale.setValue([sc, sc]); }
+        L.transform.position.setValue([host.width / 2, host.height / 2]);
+        try { for (var i = 1; i <= host.numLayers; i++) { host.layer(i).selected = false; } L.selected = true; } catch (e) { /* ignore */ }
+        return L;
+    }
+
     function findFolder(name) {
         for (var i = 1; i <= app.project.numItems; i++) {
             var it = app.project.item(i);
@@ -506,8 +599,9 @@ var DGAE = (function () {
         return app.project.items.addFolder(name);
     }
 
-    function render(scene, specJson, target) {
-        W = scene.width; H = scene.height; layerMap = {}; nameCount = {}; glowDone = {}; LIVE = scene.live;
+    function render(scene, specJson, target, hostComp) {
+        W = scene.width; H = scene.height; layerMap = {}; nameCount = {}; glowDone = {}; LIVE = scene.live; COLORS = null; EGP_TEXT = {};
+        var inserted = null, egpCount = 0;
         if (!app.project) { app.newProject(); }
         app.beginUndoGroup('DocuGraph: create chart');
         var made = 0, i, byId = {};
@@ -528,8 +622,9 @@ var DGAE = (function () {
             try { comp.comment = 'DocuGraph ' + DG.version + '\n' + specJson; } catch (ec) { /* ignore */ }
             comp.bgColor = rgb(scene.bg);
 
+            var bg = null;
             if (!scene.transparent) {
-                var bg = comp.layers.addSolid(rgb(scene.bg), 'Background', W, H, 1);
+                bg = comp.layers.addSolid(rgb(scene.bg), 'Background', W, H, 1);
                 if (scene.bg2) {
                     try {
                         var ramp = bg.property('ADBE Effect Parade').addProperty('ADBE Ramp');
@@ -540,12 +635,22 @@ var DGAE = (function () {
                         ramp.property('ADBE Ramp-0005').setValue(2);
                     } catch (er) { /* gradient is optional */ }
                 }
-                bg.locked = true;
             }
             ctrl = comp.layers.addNull(scene.duration);
             ctrl.name = 'DG Controller';
             ctrl.transform.anchorPoint.setValue([0, 0]);
             ctrl.transform.position.setValue([W / 2, H / 2]);
+            setupColors(scene);
+            if (bg) {
+                fillEffect(bg, scene.bg);
+                if (scene.bg2) {
+                    try {
+                        linkColor(bg.property('ADBE Effect Parade').property('ADBE Ramp').property('ADBE Ramp-0002'), scene.bg2);
+                        linkColor(bg.property('ADBE Effect Parade').property('ADBE Ramp').property('ADBE Ramp-0004'), scene.bg);
+                    } catch (el2) { /* optional */ }
+                }
+                bg.locked = true;
+            }
 
             if (LIVE) { liveSliders(scene); }
             for (i = 0; i < scene.els.length; i++) { byId[scene.els[i].id] = scene.els[i]; }
@@ -561,11 +666,13 @@ var DGAE = (function () {
             ctrl.moveToBeginning();
             /* tag our layers so "Update" can replace them later */
             for (i = 1; i <= comp.numLayers - before; i++) { try { comp.layer(i).comment = 'DocuGraph'; } catch (em) { /* ignore */ } }
-            comp.openInViewer();
+            egpCount = addEGP(scene);
+            if (hostComp && !target) { inserted = insertInto(hostComp); }
+            if (inserted) { hostComp.openInViewer(); } else { comp.openInViewer(); }
         } finally {
             app.endUndoGroup();
         }
-        return 'OK|' + comp.name + '|' + made + '|' + comp.numLayers;
+        return 'OK|' + comp.name + '|' + made + '|' + comp.numLayers + '|' + (inserted ? hostComp.name : '') + '|' + egpCount;
     }
 
     return { render: render };
