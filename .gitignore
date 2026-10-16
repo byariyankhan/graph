@@ -1,0 +1,4 @@
+node_modules/
+*.zxp
+.DS_Store
+docs/img/*.html

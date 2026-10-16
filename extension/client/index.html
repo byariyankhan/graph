@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>DocuGraph</title>
+    <link rel="stylesheet" href="css/panel.css">
+</head>
+<body>
+    <header class="top">
+        <div class="brand">Docu<b>Graph</b> <span id="ver"></span></div>
+        <div id="status" class="status">Preview mode</div>
+    </header>
+
+    <section class="preview">
+        <div id="stage" class="stage"></div>
+        <div class="transport">
+            <button id="play" class="icon" title="Play / pause (Space)">▶</button>
+            <input id="scrub" type="range" min="0" max="1000" value="1000">
+            <span id="time" class="time">0.0s</span>
+        </div>
+    </section>
+
+    <nav class="tabs" id="tabs">
+        <button data-tab="chart" class="on">Chart</button>
+        <button data-tab="data">Data</button>
+        <button data-tab="style">Style</button>
+        <button data-tab="text">Text &amp; Numbers</button>
+        <button data-tab="anim">Motion</button>
+    </nav>
+
+    <main class="pages">
+        <!-- CHART -->
+        <div class="page on" id="page-chart">
+            <label class="lbl">Chart type</label>
+            <div id="types" class="types"></div>
+            <label class="lbl">Variant</label>
+            <div id="variants" class="pills"></div>
+            <label class="lbl">Output size</label>
+            <div class="row">
+                <select id="size">
+                    <option value="1920x1080">1920×1080 · HD</option>
+                    <option value="3840x2160">3840×2160 · 4K</option>
+                    <option value="1080x1920">1080×1920 · Shorts / Reels</option>
+                    <option value="1080x1080">1080×1080 · Square</option>
+                    <option value="1080x1350">1080×1350 · Portrait 4:5</option>
+                </select>
+                <select id="fps">
+                    <option>24</option><option>25</option><option selected>30</option><option>50</option><option>60</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- DATA -->
+        <div class="page" id="page-data">
+            <label class="lbl">Paste from Excel / Google Sheets / CSV <span class="hint" id="dataHint"></span></label>
+            <textarea id="data" spellcheck="false" rows="10"></textarea>
+            <div class="row">
+                <button id="loadSample" class="ghost">Load sample</button>
+                <span id="parseInfo" class="hint"></span>
+            </div>
+            <label class="lbl">Highlight (comma separated names)</label>
+            <input id="highlight" placeholder="e.g. Bangladesh">
+            <div class="row">
+                <div><label class="lbl">Sort</label>
+                    <select id="sort"><option value="none">As pasted</option><option value="desc">Largest first</option><option value="asc">Smallest first</option></select></div>
+                <div><label class="lbl">Colour bars by</label>
+                    <select id="colorBy"><option value="single">One colour</option><option value="category">Each category</option></select></div>
+            </div>
+            <div class="checks">
+                <label><input type="checkbox" id="values" checked> Value labels</label>
+                <label><input type="checkbox" id="grid" checked> Grid</label>
+                <label><input type="checkbox" id="axis" checked> Axis labels</label>
+                <label><input type="checkbox" id="endLabels" checked> Line tip labels</label>
+            </div>
+        </div>
+
+        <!-- STYLE -->
+        <div class="page" id="page-style">
+            <label class="lbl">Theme</label>
+            <div id="themes" class="themes"></div>
+            <div class="row">
+                <div><label class="lbl">Accent / highlight</label><input id="hi" type="color" value="#E8B04B"><label class="mini"><input type="checkbox" id="hiOn"> override</label></div>
+                <div><label class="lbl">Background</label>
+                    <select id="background"><option value="solid">Theme background</option><option value="transparent">Transparent (overlay on footage)</option></select></div>
+            </div>
+            <label class="lbl">Fonts (PostScript names — optional)</label>
+            <div class="row">
+                <input id="fTitle" placeholder="Title e.g. Montserrat-Bold">
+                <input id="fBody" placeholder="Body e.g. Inter-Regular">
+            </div>
+            <div class="row">
+                <input id="fBnBold" placeholder="Bangla bold e.g. HindSiliguri-Bold">
+                <input id="fBnBody" placeholder="Bangla body e.g. HindSiliguri-Regular">
+            </div>
+            <p class="hint">Bangla text switches to the Bangla font automatically. In AE set Preferences → Type → <b>South Asian and Middle Eastern</b> engine for correct conjuncts.</p>
+        </div>
+
+        <!-- TEXT -->
+        <div class="page" id="page-text">
+            <label class="lbl">Title</label><input id="title">
+            <label class="lbl">Subtitle</label><input id="subtitle">
+            <div class="row">
+                <div><label class="lbl">Source</label><input id="source" placeholder="Source: World Bank"></div>
+                <div><label class="lbl">Credit / channel</label><input id="credit" placeholder="@yourchannel"></div>
+            </div>
+            <label class="lbl">Number format</label>
+            <div class="row">
+                <input id="prefix" placeholder="Prefix ($, ৳)">
+                <input id="suffix" placeholder="Suffix (%, M)">
+                <input id="decimals" type="number" min="0" max="4" placeholder="Decimals">
+            </div>
+            <div class="row">
+                <select id="grouping"><option value="intl">1,234,567</option><option value="indian">12,34,567 (lakh/crore)</option><option value="none">1234567</option></select>
+                <select id="digits"><option value="latin">0123 digits</option><option value="bn">০১২৩ Bangla digits</option></select>
+                <select id="compact"><option value="none">Full number</option><option value="en">K / M / B</option><option value="words">million / billion</option><option value="bn">হাজার / লাখ / কোটি</option></select>
+            </div>
+            <p class="hint" id="fmtDemo"></p>
+        </div>
+
+        <!-- MOTION -->
+        <div class="page" id="page-anim">
+            <div class="row">
+                <div><label class="lbl">Speed</label><input id="speed" type="range" min="0.4" max="2.5" step="0.1" value="1"><span id="speedV" class="hint"></span></div>
+                <div><label class="lbl">Stagger (s)</label><input id="stagger" type="number" min="0" max="1" step="0.02" value="0.12"></div>
+            </div>
+            <div class="row">
+                <div><label class="lbl">Easing</label>
+                    <select id="ease"><option value="out">Expo out (documentary)</option><option value="smooth">Smooth in-out</option><option value="easy">Easy ease</option><option value="snap">Snappy</option><option value="linear">Linear</option></select></div>
+                <div><label class="lbl">Title entrance</label>
+                    <select id="titleAnim"><option value="fade">Fade up</option><option value="type">Typewriter</option></select></div>
+            </div>
+            <div class="row">
+                <div><label class="lbl">Comp length (s)</label><input id="duration" type="number" min="3" max="120" value="10"></div>
+                <label class="mini" style="align-self:end"><input type="checkbox" id="overshoot" checked> Overshoot / bounce</label>
+            </div>
+        </div>
+    </main>
+
+    <footer class="foot">
+        <button id="create" class="primary">Create in After Effects</button>
+    </footer>
+
+    <script src="../shared/core.js"></script>
+    <script src="../shared/themes.js"></script>
+    <script src="../shared/build.js"></script>
+    <script src="../shared/charts/bar.js"></script>
+    <script src="../shared/charts/line.js"></script>
+    <script src="../shared/charts/pie.js"></script>
+    <script src="../shared/charts/counter.js"></script>
+    <script src="../shared/charts/timeline.js"></script>
+    <script src="../shared/charts/pyramid.js"></script>
+    <script src="../shared/samples.js"></script>
+    <script src="js/preview.js"></script>
+    <script src="js/host.js"></script>
+    <script src="js/panel.js"></script>
+</body>
+</html>
