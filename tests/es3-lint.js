@@ -7,7 +7,7 @@ let acorn;
 for (const p of ['acorn', '/opt/node22/lib/node_modules/eslint/node_modules/acorn', '/opt/node-tools/node_modules/acorn']) {
     try { acorn = require(p); break; } catch (e) { /* next */ }
 }
-const files = SHARED.concat(['host/main.jsx', 'host/render.jsx']);
+const files = ['shared/manifest.js'].concat(SHARED, ['host/main.jsx', 'host/render.jsx']);
 const BANNED = [/\.forEach\(/, /\.map\(/, /\.filter\(/, /\.reduce\(/, /\.some\(/, /\.every\(/, /Object\.keys/, /Array\.isArray/,
     /JSON\.(parse|stringify)/, /\.trim\(\)/, /Date\.now/, /\.bind\(/, /\bconst\b/, /\blet\b/, /=>/, /`/];
 let bad = 0;

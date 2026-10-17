@@ -15,6 +15,14 @@ DG.VARIANTS.race = [
     { id: 'bars', label: 'Bar race (horizontal)' },
     { id: 'columns', label: 'Column race' }
 ];
+DG.TYPES = DG.TYPES || {};
+DG.TYPES.race = {
+    label: 'Bar race', order: 6,
+    icon: '<rect x="4" y="3" width="34" height="6"/><rect x="4" y="12" width="25" height="6" opacity=".7"/><rect x="4" y="21" width="16" height="6" opacity=".45"/>',
+    live: [],
+    columns: {"_": "year, entity 1, entity 2, \u2026 (or entities \u00d7 years)"},
+    ai: {"_": "First column = year, oldest first. One column per entity (e.g. country). One row per year. Include enough entities (8\u201315) and years to make a race."}
+};
 
 DG.charts.race = function (ctx) {
     var o = ctx.opts, th = ctx.theme, u = ctx.u, T = ctx.T, P = ctx.plot;

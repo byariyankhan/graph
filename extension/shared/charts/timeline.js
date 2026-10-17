@@ -13,6 +13,14 @@ DG.VARIANTS.timeline = [
     { id: 'vertical', label: 'Vertical (Shorts / list)' },
     { id: 'eras', label: 'Eras / spans' }
 ];
+DG.TYPES = DG.TYPES || {};
+DG.TYPES.timeline = {
+    label: 'Timeline', order: 5,
+    icon: '<line x1="3" y1="15" x2="41" y2="15" stroke-width="2"/><circle cx="10" cy="15" r="3"/><circle cx="22" cy="15" r="3"/><circle cx="34" cy="15" r="3"/>',
+    live: [],
+    columns: {"_": "date, title[, note]", "eras": "start, end, label"},
+    ai: {"_": "Columns: year (or date), event title, short note (max 6 words). One row per event, oldest first.", "eras": "Columns: start year, end year, period name. One row per period, oldest first."}
+};
 
 DG.charts.timeline = function (ctx) {
     var o = ctx.opts, th = ctx.theme, u = ctx.u, T = ctx.T, P = ctx.plot;

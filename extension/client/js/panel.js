@@ -4,19 +4,8 @@
     var $ = function (id) { return document.getElementById(id); };
     var STORE = 'docugraph.state.v1';
 
-    var TYPES = [
-        { id: 'bar', label: 'Bar', icon: '<rect x="4" y="16" width="8" height="12"/><rect x="16" y="6" width="8" height="22"/><rect x="28" y="11" width="8" height="17"/>' },
-        { id: 'line', label: 'Line', icon: '<polyline points="3,26 13,18 22,21 33,7 41,10" fill="none" stroke-width="3"/>' },
-        { id: 'pie', label: 'Pie / Donut', icon: '<circle cx="22" cy="15" r="10" fill="none" stroke-width="6" stroke-dasharray="40 100"/><circle cx="22" cy="15" r="10" fill="none" stroke-width="6" opacity=".4"/>' },
-        { id: 'counter', label: 'Big number', icon: '<text x="22" y="22" text-anchor="middle" font-size="17" font-weight="700" stroke="none">123</text>' },
-        { id: 'timeline', label: 'Timeline', icon: '<line x1="3" y1="15" x2="41" y2="15" stroke-width="2"/><circle cx="10" cy="15" r="3"/><circle cx="22" cy="15" r="3"/><circle cx="34" cy="15" r="3"/>' },
-        { id: 'race', label: 'Bar race', icon: '<rect x="4" y="3" width="34" height="6"/><rect x="4" y="12" width="25" height="6" opacity=".7"/><rect x="4" y="21" width="16" height="6" opacity=".45"/>' },
-        { id: 'scatter', label: 'Bubble', icon: '<circle cx="11" cy="20" r="5"/><circle cx="23" cy="12" r="8" opacity=".7"/><circle cx="35" cy="20" r="3.5"/>' },
-        { id: 'waffle', label: 'Waffle / icons', icon: '<g>' + [0,1,2,3,4].map(function (r) { return [0,1,2,3,4,5,6].map(function (c) { return '<rect x="' + (4 + c * 5.4) + '" y="' + (2 + r * 5.4) + '" width="4.4" height="4.4"' + (r * 7 + c < 24 ? '' : ' opacity=".3"') + '/>'; }).join(''); }).join('') + '</g>' },
-        { id: 'compare', label: 'Compare', icon: '<line x1="8" y1="24" x2="36" y2="8" stroke-width="2.5"/><line x1="8" y1="10" x2="36" y2="20" stroke-width="2.5" opacity=".5"/><circle cx="8" cy="24" r="3"/><circle cx="36" cy="8" r="3"/><circle cx="8" cy="10" r="3" opacity=".5"/><circle cx="36" cy="20" r="3" opacity=".5"/>' },
-        { id: 'gauge', label: 'Gauge', icon: '<path d="M6 25 A16 16 0 0 1 38 25" fill="none" stroke-width="5"/><line x1="22" y1="25" x2="31" y2="13" stroke-width="2.5"/><circle cx="22" cy="25" r="2.5"/>' },
-        { id: 'pyramid', label: 'Pyramid', icon: '<rect x="8" y="22" width="13" height="5"/><rect x="23" y="22" width="13" height="5"/><rect x="11" y="15" width="10" height="5"/><rect x="23" y="15" width="10" height="5"/><rect x="15" y="8" width="6" height="5"/><rect x="23" y="8" width="6" height="5"/>' }
-    ];
+    /* chart types come from the registry in shared/charts/*.js */
+    var TYPES = DG.typeIds().map(function (id) { return { id: id, label: DG.TYPES[id].label, icon: DG.TYPES[id].icon }; });
 
     var DEFAULT = {
         type: 'bar', variant: 'column', theme: 'docDark', size: '1920x1080', fps: 30, duration: 10,
@@ -120,16 +109,7 @@
         $('variants').innerHTML = (DG.VARIANTS[state.type] || []).map(function (v) {
             return '<span class="pill' + (v.id === state.variant ? ' on' : '') + '" data-id="' + v.id + '">' + v.label + '</span>';
         }).join('');
-        var hints = {
-            bar: 'label, value[, value…]', line: 'x (year), series…', pie: 'label, value',
-            counter: 'label, value[, start value]', timeline: state.variant === 'eras' ? 'start, end, label' : 'date, title[, note]', pyramid: 'group, left, right',
-            race: 'year, entity 1, entity 2, … (or entities × years)',
-            compare: state.variant === 'waterfall' ? 'label, value (first row = start total, then +/− changes)' : state.variant === 'diverging' ? 'label, change (+/−)' : 'label, then, now',
-            gauge: 'label, value[, max = 100][, target]',
-            waffle: 'label, value (one row = share of 100; several rows = parts of the whole)',
-            scatter: state.variant === 'gapminder' ? 'entity, year, x, y, size[, group]' : state.variant === 'scatter' ? 'label, x, y[, group]' : 'label, x, y, size[, group]'
-        };
-        $('dataHint').textContent = '— columns: ' + hints[state.type];
+        $('dataHint').textContent = '— columns: ' + DG.typeInfo(state.type, state.variant, 'columns');
     }
     function renderThemes() {
         $('themes').innerHTML = DG.THEME_ORDER.map(function (id) {

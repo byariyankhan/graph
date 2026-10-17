@@ -4,13 +4,11 @@ const path = require('path');
 const vm = require('vm');
 
 const EXT = path.join(__dirname, '..', 'extension');
-const SHARED = [
-    'shared/core.js', 'shared/themes.js', 'shared/build.js',
-    'shared/charts/bar.js', 'shared/charts/line.js', 'shared/charts/pie.js',
-    'shared/charts/counter.js', 'shared/charts/timeline.js', 'shared/charts/pyramid.js',
-    'shared/charts/race.js', 'shared/charts/scatter.js', 'shared/charts/waffle.js', 'shared/charts/compare.js', 'shared/charts/gauge.js',
-    'shared/samples.js'
-];
+const SHARED = (() => {
+    const sb = {}; vm.createContext(sb);
+    vm.runInContext(fs.readFileSync(path.join(EXT, 'shared/manifest.js'), 'utf8'), sb);
+    return Array.from(sb.DG.FILES);
+})();
 
 function load(extra) {
     const sandbox = { console, globalThis: null };

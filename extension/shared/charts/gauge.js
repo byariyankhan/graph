@@ -14,6 +14,14 @@ DG.VARIANTS.gauge = [
     { id: 'thermometer', label: 'Thermometer' },
     { id: 'progress', label: 'Progress bars' }
 ];
+DG.TYPES = DG.TYPES || {};
+DG.TYPES.gauge = {
+    label: 'Gauge', order: 10,
+    icon: '<path d="M6 25 A16 16 0 0 1 38 25" fill="none" stroke-width="5"/><line x1="22" y1="25" x2="31" y2="13" stroke-width="2.5"/><circle cx="22" cy="25" r="2.5"/>',
+    live: [],
+    columns: {"_": "label, value[, max = 100][, target]"},
+    ai: {"_": "Columns: label, value, maximum of the scale, target (optional)."}
+};
 
 DG.charts.gauge = function (ctx) {
     var o = ctx.opts, th = ctx.theme, u = ctx.u, T = ctx.T, P = ctx.plot, i;

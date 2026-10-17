@@ -13,6 +13,14 @@ DG.VARIANTS.pie = [
     { id: 'rings', label: 'Progress rings' },
     { id: 'rose', label: 'Rose (Nightingale)' }
 ];
+DG.TYPES = DG.TYPES || {};
+DG.TYPES.pie = {
+    label: 'Pie / Donut', order: 3,
+    icon: '<circle cx="22" cy="15" r="10" fill="none" stroke-width="6" stroke-dasharray="40 100"/><circle cx="22" cy="15" r="10" fill="none" stroke-width="6" opacity=".4"/>',
+    live: ["donut", "pie", "semi", "rings"],
+    columns: {"_": "label, value"},
+    ai: {"_": "Two columns: label, value. Values are parts of one whole (they may be percentages that add up to about 100)."}
+};
 
 DG.charts.pie = function (ctx) {
     var o = ctx.opts, th = ctx.theme, u = ctx.u, T = ctx.T, P = ctx.plot;

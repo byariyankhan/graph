@@ -10,6 +10,14 @@ DG.VARIANTS.pyramid = [
     { id: 'classic', label: 'Population pyramid' },
     { id: 'butterfly', label: 'Butterfly (two-sided)' }
 ];
+DG.TYPES = DG.TYPES || {};
+DG.TYPES.pyramid = {
+    label: 'Pyramid', order: 11,
+    icon: '<rect x="8" y="22" width="13" height="5"/><rect x="23" y="22" width="13" height="5"/><rect x="11" y="15" width="10" height="5"/><rect x="23" y="15" width="10" height="5"/><rect x="15" y="8" width="6" height="5"/><rect x="23" y="8" width="6" height="5"/>',
+    live: [],
+    columns: {"_": "group, left, right"},
+    ai: {"_": "Columns: age group (youngest first, e.g. 0-4, 5-9 \u2026), male, female. Values as % of total population or in people."}
+};
 
 DG.charts.pyramid = function (ctx) {
     var o = ctx.opts, th = ctx.theme, u = ctx.u, T = ctx.T, P = ctx.plot;

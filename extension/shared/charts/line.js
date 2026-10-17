@@ -15,6 +15,14 @@ DG.VARIANTS.line = [
     { id: 'area', label: 'Area' },
     { id: 'stacked', label: 'Stacked area' }
 ];
+DG.TYPES = DG.TYPES || {};
+DG.TYPES.line = {
+    label: 'Line', order: 2,
+    icon: '<polyline points="3,26 13,18 22,21 33,7 41,10" fill="none" stroke-width="3"/>',
+    live: ["line", "smooth", "stepped", "area"],
+    columns: {"_": "x (year), series\u2026"},
+    ai: {"_": "First column = year (or date), oldest first. One column per series (e.g. one per country). One row per year."}
+};
 
 DG.charts.line = function (ctx) {
     var o = ctx.opts, th = ctx.theme, u = ctx.u, T = ctx.T;

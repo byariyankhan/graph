@@ -11,6 +11,28 @@ var DG = (typeof DG !== 'undefined') ? DG : {};
 DG.version = '0.1.0';
 DG.charts = DG.charts || {};
 DG.VARIANTS = DG.VARIANTS || {};
+DG.TYPES = DG.TYPES || {}; /* per chart type: label, order, icon, live, columns, ai — set in each charts/*.js */
+
+/* Chart types in menu order. */
+DG.typeIds = function () {
+    var ids = [], k;
+    for (k in DG.TYPES) { if (DG.TYPES.hasOwnProperty(k)) { ids.push(k); } }
+    ids.sort(function (a, b) { return DG.TYPES[a].order - DG.TYPES[b].order; });
+    return ids;
+};
+/* A per-variant text of a chart type (falls back to the type default '_'). */
+DG.typeInfo = function (type, variant, key) {
+    var t = DG.TYPES[type], m = t && t[key];
+    if (!m) { return ''; }
+    return m.hasOwnProperty(variant) ? m[variant] : (m._ || '');
+};
+/* Does this variant drive its data from AE sliders (live data)? */
+DG.isLive = function (type, variant) {
+    var t = DG.TYPES[type];
+    if (!t || !t.live) { return false; }
+    for (var i = 0; i < t.live.length; i++) { if (t.live[i] === variant) { return true; } }
+    return false;
+};
 
 /* ------------------------------------------------------------------ utils */
 

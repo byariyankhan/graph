@@ -12,6 +12,14 @@ DG.VARIANTS.counter = [
     { id: 'compare', label: 'Compare (A vs B)' },
     { id: 'cards', label: 'Stat cards' }
 ];
+DG.TYPES = DG.TYPES || {};
+DG.TYPES.counter = {
+    label: 'Big number', order: 4,
+    icon: '<text x="22" y="22" text-anchor="middle" font-size="17" font-weight="700" stroke="none">123</text>',
+    live: ["single", "compare", "cards"],
+    columns: {"_": "label, value[, start value]"},
+    ai: {"_": "Columns: label, value, start value (optional \u2014 where the count-up should start, e.g. an earlier year). One row per number."}
+};
 
 DG.charts.counter = function (ctx) {
     var o = ctx.opts, th = ctx.theme, u = ctx.u, T = ctx.T, P = ctx.plot;

@@ -14,6 +14,14 @@ DG.VARIANTS.bar = [
     { id: 'percent', label: '100% Stacked' },
     { id: 'lollipop', label: 'Lollipop' }
 ];
+DG.TYPES = DG.TYPES || {};
+DG.TYPES.bar = {
+    label: 'Bar', order: 1,
+    icon: '<rect x="4" y="16" width="8" height="12"/><rect x="16" y="6" width="8" height="22"/><rect x="28" y="11" width="8" height="17"/>',
+    live: ["column", "horizontal", "grouped"],
+    columns: {"_": "label, value[, value\u2026]"},
+    ai: {"_": "First column = category (e.g. country). One more column per series (e.g. one per year). One row per category."}
+};
 
 DG.charts.bar = function (ctx) {
     var o = ctx.opts, th = ctx.theme, u = ctx.u, T = ctx.T;

@@ -13,25 +13,8 @@
     var AI = {};
 
     /* ------------------------------------------------------------ prompts */
-    var SHAPES = {
-        bar: 'First column = category (e.g. country). One more column per series (e.g. one per year). One row per category.',
-        line: 'First column = year (or date), oldest first. One column per series (e.g. one per country). One row per year.',
-        pie: 'Two columns: label, value. Values are parts of one whole (they may be percentages that add up to about 100).',
-        counter: 'Columns: label, value, start value (optional — where the count-up should start, e.g. an earlier year). One row per number.',
-        timeline: 'Columns: year (or date), event title, short note (max 6 words). One row per event, oldest first.',
-        'timeline:eras': 'Columns: start year, end year, period name. One row per period, oldest first.',
-        pyramid: 'Columns: age group (youngest first, e.g. 0-4, 5-9 …), male, female. Values as % of total population or in people.',
-        race: 'First column = year, oldest first. One column per entity (e.g. country). One row per year. Include enough entities (8–15) and years to make a race.',
-        scatter: 'Columns: label, x value, y value, size value, group (e.g. region). Put the real measure names in the header row.',
-        'scatter:scatter': 'Columns: label, x value, y value, group (optional). Put the real measure names in the header row.',
-        'scatter:gapminder': 'Long format. Columns: entity, year, x value, y value, size value, group (e.g. region). One row per entity per year; the same years for every entity.',
-        waffle: 'Columns: label, value. One row with a single percentage (e.g. 76) — or several rows that are parts of one whole.',
-        compare: 'Columns: label, value then, value now. Put the two periods (e.g. 1990, 2020) as the header names.',
-        'compare:waterfall': 'Columns: step, value. First row = the starting total, then one row per change (+ or −). Do not add the final total.',
-        'compare:diverging': 'Columns: label, change. Changes can be positive or negative.',
-        gauge: 'Columns: label, value, maximum of the scale, target (optional).'
-    };
-    AI.shape = function (type, variant) { return SHAPES[type + ':' + variant] || SHAPES[type] || SHAPES.bar; };
+    /* the table shape for each chart lives with the chart (DG.TYPES[type].ai) */
+    AI.shape = function (type, variant) { return root.DG.typeInfo(type, variant, 'ai') || root.DG.typeInfo('bar', '', 'ai'); };
 
     AI.buildPrompt = function (o) {
         var lines = [

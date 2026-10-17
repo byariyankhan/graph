@@ -15,6 +15,14 @@ DG.VARIANTS.waffle = [
     { id: 'icons', label: 'People icons' },
     { id: 'circles', label: 'Proportional circles' }
 ];
+DG.TYPES = DG.TYPES || {};
+DG.TYPES.waffle = {
+    label: 'Waffle / icons', order: 8,
+    icon: '<g><rect x="4" y="2" width="4.4" height="4.4"/><rect x="9.4" y="2" width="4.4" height="4.4"/><rect x="14.8" y="2" width="4.4" height="4.4"/><rect x="20.2" y="2" width="4.4" height="4.4"/><rect x="25.6" y="2" width="4.4" height="4.4"/><rect x="31" y="2" width="4.4" height="4.4"/><rect x="36.4" y="2" width="4.4" height="4.4"/><rect x="4" y="7.4" width="4.4" height="4.4"/><rect x="9.4" y="7.4" width="4.4" height="4.4"/><rect x="14.8" y="7.4" width="4.4" height="4.4"/><rect x="20.2" y="7.4" width="4.4" height="4.4"/><rect x="25.6" y="7.4" width="4.4" height="4.4"/><rect x="31" y="7.4" width="4.4" height="4.4"/><rect x="36.4" y="7.4" width="4.4" height="4.4"/><rect x="4" y="12.8" width="4.4" height="4.4"/><rect x="9.4" y="12.8" width="4.4" height="4.4"/><rect x="14.8" y="12.8" width="4.4" height="4.4"/><rect x="20.2" y="12.8" width="4.4" height="4.4"/><rect x="25.6" y="12.8" width="4.4" height="4.4"/><rect x="31" y="12.8" width="4.4" height="4.4"/><rect x="36.4" y="12.8" width="4.4" height="4.4"/><rect x="4" y="18.2" width="4.4" height="4.4"/><rect x="9.4" y="18.2" width="4.4" height="4.4"/><rect x="14.8" y="18.2" width="4.4" height="4.4"/><rect x="20.2" y="18.2" width="4.4" height="4.4" opacity=".3"/><rect x="25.6" y="18.2" width="4.4" height="4.4" opacity=".3"/><rect x="31" y="18.2" width="4.4" height="4.4" opacity=".3"/><rect x="36.4" y="18.2" width="4.4" height="4.4" opacity=".3"/><rect x="4" y="23.6" width="4.4" height="4.4" opacity=".3"/><rect x="9.4" y="23.6" width="4.4" height="4.4" opacity=".3"/><rect x="14.8" y="23.6" width="4.4" height="4.4" opacity=".3"/><rect x="20.2" y="23.6" width="4.4" height="4.4" opacity=".3"/><rect x="25.6" y="23.6" width="4.4" height="4.4" opacity=".3"/><rect x="31" y="23.6" width="4.4" height="4.4" opacity=".3"/><rect x="36.4" y="23.6" width="4.4" height="4.4" opacity=".3"/></g>',
+    live: [],
+    columns: {"_": "label, value (one row = share of 100; several rows = parts of the whole)"},
+    ai: {"_": "Columns: label, value. One row with a single percentage (e.g. 76) \u2014 or several rows that are parts of one whole."}
+};
 
 /* Split 100 units between values (largest remainder, so it sums exactly). */
 DG.shares100 = function (vals) {

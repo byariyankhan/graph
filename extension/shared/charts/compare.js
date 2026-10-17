@@ -16,6 +16,14 @@ DG.VARIANTS.compare = [
     { id: 'waterfall', label: 'Waterfall' },
     { id: 'diverging', label: 'Gains & losses (+/−)' }
 ];
+DG.TYPES = DG.TYPES || {};
+DG.TYPES.compare = {
+    label: 'Compare', order: 9,
+    icon: '<line x1="8" y1="24" x2="36" y2="8" stroke-width="2.5"/><line x1="8" y1="10" x2="36" y2="20" stroke-width="2.5" opacity=".5"/><circle cx="8" cy="24" r="3"/><circle cx="36" cy="8" r="3"/><circle cx="8" cy="10" r="3" opacity=".5"/><circle cx="36" cy="20" r="3" opacity=".5"/>',
+    live: [],
+    columns: {"_": "label, then, now", "waterfall": "label, value (first row = start total, then +/\u2212 changes)", "diverging": "label, change (+/\u2212)"},
+    ai: {"_": "Columns: label, value then, value now. Put the two periods (e.g. 1990, 2020) as the header names.", "waterfall": "Columns: step, value. First row = the starting total, then one row per change (+ or \u2212). Do not add the final total.", "diverging": "Columns: label, change. Changes can be positive or negative."}
+};
 
 DG.charts.compare = function (ctx) {
     var variant = ctx.spec.variant || 'slope';

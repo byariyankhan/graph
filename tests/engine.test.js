@@ -56,6 +56,24 @@ t('FMT_SRC is self-contained (expression-safe)', () => {
     assert.strictEqual(f(1234.5, { decimals: 1, prefix: '$' }), '$1,234.5');
 });
 
+t('registry: every chart type is complete', () => {
+    assert.deepStrictEqual(Array.from(DG.typeIds()).sort(), Object.keys(DG.VARIANTS).sort());
+    for (const type of DG.typeIds()) {
+        const T = DG.TYPES[type];
+        assert.ok(T.label && T.icon && T.columns._ && T.ai._, type + ' metadata');
+        for (const v of T.live) { assert.ok(DG.VARIANTS[type].some(x => x.id === v), type + ' live variant ' + v); }
+        for (const v of DG.VARIANTS[type]) { assert.ok(DG.sample(type, v.id), type + ':' + v.id + ' sample'); }
+    }
+});
+t('registry: live flag matches what the chart really does', () => {
+    for (const type of DG.typeIds()) {
+        for (const v of DG.VARIANTS[type]) {
+            const sc = DG.build(Object.assign({}, DG.sample(type, v.id), { type, variant: v.id }));
+            assert.strictEqual(!!sc.live, DG.isLive(type, v.id), type + ':' + v.id);
+        }
+    }
+});
+
 const TYPES = Object.keys(DG.VARIANTS);
 let builds = 0;
 for (const type of TYPES) {

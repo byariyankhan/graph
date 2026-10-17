@@ -15,6 +15,14 @@ DG.VARIANTS.scatter = [
     { id: 'scatter', label: 'Scatter' },
     { id: 'gapminder', label: 'Moving bubbles (Gapminder)' }
 ];
+DG.TYPES = DG.TYPES || {};
+DG.TYPES.scatter = {
+    label: 'Bubble', order: 7,
+    icon: '<circle cx="11" cy="20" r="5"/><circle cx="23" cy="12" r="8" opacity=".7"/><circle cx="35" cy="20" r="3.5"/>',
+    live: [],
+    columns: {"_": "label, x, y, size[, group]", "scatter": "label, x, y[, group]", "gapminder": "entity, year, x, y, size[, group]"},
+    ai: {"_": "Columns: label, x value, y value, size value, group (e.g. region). Put the real measure names in the header row.", "scatter": "Columns: label, x value, y value, group (optional). Put the real measure names in the header row.", "gapminder": "Long format. Columns: entity, year, x value, y value, size value, group (e.g. region). One row per entity per year; the same years for every entity."}
+};
 
 /* Log-scale ticks: 1-2-5 steps that fall inside [lo, hi]. */
 DG.logTicks = function (lo, hi) {
