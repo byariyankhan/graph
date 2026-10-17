@@ -60,9 +60,10 @@ Click **Create chart** or press Ctrl+Enter.
   - the data values
   - chart scale and position
 - **Live data:** with a supported style, changing a value slider redraws bars, slices, lines, labels and the axis.
-- **Re-edit:**
-  1. Select the chart layer, then click **Edit selected chart**.
-  2. Change anything, then click **Update it**.
+- **Re-edit (Edit chart mode):**
+  1. Switch the panel to **✎ Edit chart**. It finds the chart by itself: the open chart comp, the selected chart layer, or the only chart in the open comp. A green dot on the button means a chart was found.
+  2. Change anything, then click **Apply changes**. If you tick **Apply automatically**, AE updates a moment after you stop editing.
+  - **Revert** reloads the chart from AE. Your new-chart draft waits for you in **＋ New chart**.
   - The comp keeps its name and position, and any layers you added yourself are kept.
 
 ## Install (developer mode)

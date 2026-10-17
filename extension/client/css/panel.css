@@ -140,3 +140,31 @@ details[open] > summary::before { content: '▾ '; }
 .row.tight input[type=color] { flex: 0 0 48px; }
 .foot .insert { margin: 0 0 8px; }
 .primary.off, .ghost.off { opacity: .45; }
+
+/* ---- New / Edit modes ---- */
+.modes { display: flex; gap: 4px; padding: 6px 12px 0; }
+.modes button { flex: 1; background: var(--bg2); border: 1px solid var(--line); border-radius: var(--r); padding: 6px 4px; cursor: pointer; color: var(--muted); position: relative; }
+.modes button.on { background: #33302a; border-color: var(--accent); color: var(--text); font-weight: 600; }
+.modes .dot { display: none; width: 7px; height: 7px; border-radius: 50%; background: var(--ok); position: absolute; top: 5px; right: 7px; }
+.modes .dot.on { display: block; }
+.editcard { display: none; margin: 6px 12px 0; }
+body.mode-edit .editcard { display: block; }
+.ec { border: 1px solid var(--line); border-radius: var(--r); padding: 7px 10px; background: var(--panel); font-size: 11px; }
+.ec.on { border-color: #4c6a52; }
+.ec b { font-size: 12px; }
+.ec .sub { color: var(--muted); display: block; margin-top: 2px; }
+.ec .st { display: inline-block; margin-top: 4px; font-size: 11px; }
+.ec .st.dirty { color: var(--accent2); } .ec .st.clean { color: var(--ok); } .ec .st.busy { color: var(--muted); }
+.ec .other { margin-top: 6px; padding-top: 6px; border-top: 1px solid var(--line); color: var(--muted); }
+.ec a { color: var(--accent2); cursor: pointer; text-decoration: underline; }
+body.mode-edit .for-new, body:not(.mode-edit) .for-edit { display: none; }
+body.mode-edit #reset { display: none; }
+.for-edit .row.tight { align-items: stretch; }
+.for-edit .row.tight .primary { flex: 1; }
+.for-edit .row.tight .ghost { flex: 0 0 auto; padding-left: 14px; padding-right: 14px; }
+.primary:disabled { opacity: .45; cursor: default; }
+.status { max-width: none; white-space: normal; }
+body.no-chart .preview, body.no-chart .tabs, body.no-chart .pages, body.no-chart .foot { display: none; }
+.ec.empty { text-align: center; padding: 26px 14px; }
+.ec.empty .big { font-size: 26px; color: var(--muted); margin-bottom: 6px; }
+.ec.empty .sub { margin-top: 6px; }

@@ -55,9 +55,10 @@ function makeAE() {
         return l;
     }
     const CompItem = function CompItem() {};
+    const items = [];
     function makeComp(name, w, h) {
         const comp = Object.assign(Object.create(CompItem.prototype), {
-            name, width: w || 1920, height: h || 1080, time: 2, numLayers: 0, comment: '', bgColor: null, list: [], selectedLayers: [],
+            id: items.length + 1, name, width: w || 1920, height: h || 1080, time: 2, numLayers: 0, comment: '', bgColor: null, list: [], selectedLayers: [],
             layer(i) { return comp.list[i - 1]; },
             layers: {
                 addShape() { comp.numLayers++; return layer('shape', comp); },
@@ -68,12 +69,13 @@ function makeAE() {
             },
             openInViewer() {}
         });
+        items.push(comp);
         return comp;
     }
     function FolderItem() {}
     const app = {
         version: '24.0-mock', project: {
-            numItems: 0, item() { return null; },
+            get numItems() { return items.length; }, item(i) { return items[i - 1]; },
             items: {
                 addComp(name, w, h, par, dur, fps) { assert.ok(w > 0 && h > 0 && dur > 0 && fps > 0); const c = makeComp(name, w, h); log.lastComp = c; return c; },
                 addFolder() { return new FolderItem(); }
@@ -257,5 +259,42 @@ try {
     assert.ok(sb.DGHost.update(JSON.stringify(spec)).indexOf('OK|') === 0, 'update via selected layer');
     passed++;
 } catch (e) { fail++; console.error('FAIL insert/EGP', e.message); }
+/* Edit mode: detect which chart the user means, then read / update it by id */
+try {
+    const ae = makeAE(), sb = hostSandbox(ae);
+    sb.DGHost.init(EXT);
+    const D = () => { const r = sb.DGHost.detect(), i = r.indexOf('|'); return { tag: r.slice(0, i), info: JSON.parse(r.slice(i + 1)) }; };
+    assert.strictEqual(D().tag, 'NONE', 'no comp open');
+    const edit = ae.makeComp('My Edit \u2014 final');
+    sb.app.project.activeItem = edit;
+    assert.ok(/No DocuGraph chart/.test(D().info.hint));
+    const mk = (type, variant) => {
+        const spec = Object.assign({}, DG.sample(type, variant), { type, variant, insert: true, panel: { type, variant } });
+        assert.ok(sb.DGHost.build(JSON.stringify(spec)).indexOf('OK|') === 0);
+        return ae.log.lastComp;
+    };
+    const a = mk('bar', 'column');
+    let d = D();
+    assert.strictEqual(d.tag, 'OK'); assert.strictEqual(d.info.id, a.id, 'only chart in comp found');
+    assert.strictEqual(d.info.host, 'My Edit \u2014 final', 'host name survives (unicode)');
+    const b = mk('pie', 'donut');
+    d = D();
+    assert.strictEqual(d.tag, 'NONE'); assert.strictEqual(d.info.many, 2, 'two charts → ask to select');
+    edit.selectedLayers = [edit.list.find(l => l.source === b)];
+    assert.strictEqual(D().info.id, b.id, 'selected layer wins');
+    sb.app.project.activeItem = a;
+    assert.strictEqual(D().info.id, a.id, 'open chart comp wins');
+    assert.strictEqual(D().info.host, '');
+    // read / update the loaded chart even after the selection moved elsewhere
+    sb.app.project.activeItem = edit;
+    const r = sb.DGHost.read(a.id);
+    assert.ok(r.indexOf('OK|') === 0 && JSON.parse(r.slice(3)).panel.type === 'bar', 'read by id');
+    const spec = Object.assign({}, DG.sample('bar', 'horizontal'), { type: 'bar', variant: 'horizontal', panel: { type: 'bar', variant: 'horizontal' } });
+    assert.ok(sb.DGHost.update(JSON.stringify(spec), a.id).indexOf('OK|') === 0, 'update by id');
+    assert.ok(a.comment.indexOf('"horizontal"') > 0, 'the right comp was updated');
+    assert.ok(b.comment.indexOf('"donut"') > 0, 'the other chart untouched');
+    assert.ok(sb.DGHost.update(JSON.stringify(spec), 999).indexOf('ERR|') === 0, 'missing id reports an error');
+    passed++;
+} catch (e) { fail++; console.error('FAIL edit mode detect', e.message); }
 console.log(`${passed} passed, ${fail} failed (mock AE render)`);
 if (fail) { process.exitCode = 1; }

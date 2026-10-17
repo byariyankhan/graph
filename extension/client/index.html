@@ -14,6 +14,11 @@
             <button id="reset" class="icon small" title="Reset all settings to the defaults">⟲</button>
         </div>
     </header>
+    <div class="modes" id="modes">
+        <button data-mode="new" class="on" title="Make a new chart">＋ New chart</button>
+        <button data-mode="edit" title="Change a chart that is already in After Effects">✎ Edit chart<span id="editDot" class="dot" title="A chart is selected in After Effects"></span></button>
+    </div>
+    <div id="editCard" class="editcard"></div>
     <div id="status" class="status" role="status"></div>
 
     <section class="preview">
@@ -174,11 +179,16 @@
     </main>
 
     <footer class="foot">
-        <label class="mini insert"><input type="checkbox" id="insert" checked> Put it in the open comp at the playhead</label>
-        <button id="create" class="primary" title="Ctrl + Enter">Create chart</button>
-        <div class="row">
-            <button id="loadComp" class="ghost wide" title="Select the chart layer in your timeline (or open its comp), then click">⤓ Edit selected chart</button>
-            <button id="update" class="ghost wide" title="Rebuild the selected chart with these settings — keeps its name and place">⟳ Update it</button>
+        <div class="for-new">
+            <label class="mini insert"><input type="checkbox" id="insert" checked> Put it in the open comp at the playhead</label>
+            <button id="create" class="primary" title="Ctrl + Enter">Create chart</button>
+        </div>
+        <div class="for-edit">
+            <div class="row tight">
+                <button id="apply" class="primary" title="Ctrl + Enter — rebuild the chart in After Effects with these settings">Apply changes</button>
+                <button id="revert" class="ghost" title="Throw away your changes and reload the chart from After Effects">Revert</button>
+            </div>
+            <label class="mini insert"><input type="checkbox" id="autoApply"> Apply automatically while I edit</label>
         </div>
     </footer>
 

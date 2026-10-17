@@ -40,7 +40,14 @@
     try { state = migrate(JSON.parse(localStorage.getItem(STORE))); } catch (e) { state = null; }
     if (!state) { state = JSON.parse(JSON.stringify(DEFAULT)); applySample(); }
 
-    function save() { try { localStorage.setItem(STORE, JSON.stringify(state)); } catch (e) { /* private mode */ } }
+    /* Edit mode works on a chart read from AE; the new-chart draft stays saved
+     * in the panel and comes back when you return to New chart. */
+    var mode = 'new', draft = null;
+    var edit = { found: null, hint: '', loaded: null, busy: false, again: false, timer: null };
+    function save() {
+        if (edit.loaded) { renderEdit(); return; }
+        try { localStorage.setItem(STORE, JSON.stringify(state)); } catch (e) { /* private mode */ }
+    }
 
     function applySample() {
         var s = DG.sample(state.type, state.variant);
@@ -89,7 +96,7 @@
             if (!playing) { t = scene.duration; }
             draw();
         } catch (e) { setStatus('Preview error: ' + e.message, 'err'); }
-        save();
+        save(); editChanged();
     }
     /* explicit sizing (older CEP Chromium has no CSS aspect-ratio) */
     function sizeStage() {
@@ -326,7 +333,7 @@ title: 'title', subtitle: 'subtitle', source: 'source', credit: 'credit',
         if (!scene) { return; }
         var live = DG.isLive(state.type, state.variant) && state.options.live !== false;
         $('meta').innerHTML = '<span>' + scene.width + '×' + scene.height + '</span><span>' + state.fps + ' fps</span><span>' + scene.duration.toFixed(1) + ' s</span>' +
-            '<span class="' + (live ? 'yes' : 'no') + '" title="' + (live ? 'Numbers can be changed later with sliders in After Effects' : 'Change data later with Edit selected chart → Update it') + '">' + (live ? '● Live sliders' : '○ Static data') + '</span>';
+            '<span class="' + (live ? 'yes' : 'no') + '" title="' + (live ? 'Numbers can be changed later with sliders in After Effects' : 'Change data later with Edit chart → Apply changes') + '">' + (live ? '● Live sliders' : '○ Static data') + '</span>';
     }
     var timer = null;
     function changed() { info(); clearTimeout(timer); timer = setTimeout(rebuild, 120); }
@@ -453,26 +460,147 @@ title: 'title', subtitle: 'subtitle', source: 'source', credit: 'credit',
             btn.disabled = false;
             var p = res.split('|');
             if (p[0] === 'OK') {
+                poll();
                 setStatus('✓ ' + verb + ' "' + p[1] + '"' + (p[4] ? ' → added to "' + p[4] + '"' : '') + (p[5] && p[5] !== '0' ? ' · ' + p[5] + ' Essential Properties' : ''), 'ok');
             } else { setStatus(p.slice(1).join('|') || res, 'err'); }
         });
     }
-    $('create').addEventListener('click', function () { run('create', function () { return Host.build(spec()); }, 'Created'); });
-    $('update').addEventListener('click', function () { run('update', function () { return Host.update(spec()); }, 'Updated'); });
-    $('loadComp').addEventListener('click', function () {
-        if (!Host.available) { setStatus('This works inside After Effects — open Window → Extensions → DocuGraph there', 'err'); return; }
-        Host.readActive().then(function (res) {
-            var i = res.indexOf('|'), tag = res.substring(0, i), body = res.substring(i + 1);
-            if (tag !== 'OK') { setStatus(tag === 'NONE' ? 'Select the chart layer in your comp (or open the chart comp) first' : body, 'err'); return; }
-            try {
-                var sp = JSON.parse(body);
-                if (!sp.panel) { setStatus('This comp was made by an older version — settings could not be loaded', 'err'); return; }
-                state = migrate(sp.panel);
-                fillForm(); rebuild();
-                setStatus('✓ Loaded the chart — edit, then “Update chart”', 'ok');
-            } catch (e) { setStatus('Could not read comp settings: ' + e.message, 'err'); }
-        });
+    $('create').addEventListener('click', function () {
+        run('create', function () { return Host.build(spec()); }, 'Created');
     });
+
+    /* ------------------------------------------------------- edit mode */
+    var NOT_AE = 'This works inside After Effects — open Window → Extensions → DocuGraph there';
+    /* what counts as a change to the chart (not panel-only things like the table/text view) */
+    function snap() { var c = Object.assign({}, state); delete c.dataMode; delete c.aiAsk; delete c.insert; return JSON.stringify(c); }
+    function isDirty() { return !!edit.loaded && edit.loaded.base !== '' && snap() !== edit.loaded.base; }
+    function parseHost(res) {
+        var i = res.indexOf('|');
+        return { tag: res.substring(0, i < 0 ? res.length : i), body: i < 0 ? '' : res.substring(i + 1) };
+    }
+    function setMode(m) {
+        if (m === mode) { return; }
+        if (m === 'new' && isDirty() && !window.confirm('Leave without applying your changes to “' + edit.loaded.name + '”?')) { return; }
+        mode = m;
+        document.body.classList.toggle('mode-edit', m === 'edit');
+        [].forEach.call(document.querySelectorAll('#modes button'), function (b) { b.classList.toggle('on', b.dataset.mode === m); });
+        if (m === 'edit') {
+            draft = state;
+            if (edit.found) { load(edit.found); }
+            poll();
+        } else {
+            edit.loaded = null;
+            edit.loading = false;
+            if (draft) { state = draft; draft = null; filter = 'all'; fillForm(); rebuild(); }
+        }
+        renderEdit();
+        sizeStage();
+    }
+    $('modes').addEventListener('click', function (e) { var b = e.target.closest('button'); if (b) { setMode(b.dataset.mode); } });
+
+    function load(found) {
+        edit.loading = true;
+        Host.read(found.id).then(function (res) {
+            var r = parseHost(res);
+            edit.loading = false;
+            if (mode !== 'edit') { return; }
+            if (r.tag !== 'OK') { setStatus(r.tag === 'NONE' ? 'That chart could not be found any more' : r.body, 'err'); return; }
+            try {
+                var sp = JSON.parse(r.body);
+                if (!sp.panel) { setStatus('“' + found.name + '” was made by an older DocuGraph — create it again to edit it here', 'err'); return; }
+                state = migrate(sp.panel);
+                edit.loaded = { id: found.id, name: found.name, host: found.host, base: '', applied: false };
+                filter = 'all'; fillForm(); rebuild();
+                edit.loaded.base = snap();
+                renderEdit();
+            } catch (e) { setStatus('Could not read the chart settings: ' + e.message, 'err'); }
+        });
+    }
+
+    /* ask AE every 1.5 s which chart is selected / open */
+    var polling = false;
+    function poll() {
+        if (!Host.available || polling || document.hidden) { return; }
+        polling = true;
+        Host.detect().then(function (res) {
+            polling = false;
+            var r = parseHost(res), info = {};
+            try { info = JSON.parse(r.body || '{}'); } catch (e) { info = {}; }
+            var found = r.tag === 'OK' ? info : null;
+            edit.found = found; edit.hint = r.tag === 'ERR' ? r.body : (info.hint || '');
+            $('editDot').classList.toggle('on', !!found);
+            /* follow the selection — unless that would throw away unapplied edits */
+            if (mode === 'edit' && found && !edit.loading && (!edit.loaded || (edit.loaded.id !== found.id && !isDirty() && !edit.busy))) { load(found); }
+            if (edit.loaded && found && found.id === edit.loaded.id) { edit.loaded.name = found.name; edit.loaded.host = found.host; }
+            renderEdit();
+        }, function () { polling = false; });
+    }
+    if (Host.available) {
+        setInterval(poll, 1500);
+        window.addEventListener('focus', poll);
+    }
+
+    function renderEdit() {
+        document.body.classList.toggle('no-chart', mode === 'edit' && !edit.loaded);
+        if (mode !== 'edit') { return; }
+        var esc = escHtml, L = edit.loaded, html;
+        if (!Host.available) {
+            html = '<div class="ec empty"><div class="big">✎</div><b>Edit a chart</b><span class="sub">' + NOT_AE + '.</span></div>';
+        } else if (!L) {
+            html = '<div class="ec empty"><div class="big">✎</div><b>No chart selected</b><span class="sub">' + esc(edit.hint || 'Looking for a chart…') +
+                '</span><span class="sub">Click a DocuGraph chart layer in your timeline, or open its comp —<br>it opens here by itself.</span></div>';
+        } else {
+            var vLabel = (DG.VARIANTS[state.type].filter(function (v) { return v.id === state.variant; })[0] || {}).label || '';
+            var st = edit.busy ? '<span class="st busy">Applying…</span>' : isDirty() ? '<span class="st dirty">● Changes not applied yet</span>'
+                : '<span class="st clean">✓ ' + (L.applied ? 'Applied — the chart in AE is up to date' : 'Same as in After Effects') + '</span>';
+            html = '<div class="ec on"><b>✎ ' + esc(L.name) + '</b><span class="sub">' + esc(DG.TYPES[state.type].label + ' · ' + vLabel) + (L.host ? ' · in “' + esc(L.host) + '”' : '') + '</span>' + st;
+            var F = edit.found;
+            if (F && F.id !== L.id) { html += '<div class="other">“' + esc(F.name) + '” is selected. <a id="switchTo">Edit that one</a> (your changes here are dropped)</div>'; }
+            html += '</div>';
+        }
+        $('editCard').innerHTML = html;
+        $('apply').disabled = !L || edit.busy;
+        $('revert').disabled = !L || edit.busy;
+    }
+    $('editCard').addEventListener('click', function (e) {
+        if (e.target.id === 'switchTo' && edit.found) { edit.loaded = null; load(edit.found); }
+    });
+
+    function apply(auto) {
+        if (!Host.available) { setStatus(NOT_AE, 'err'); return; }
+        var L = edit.loaded;
+        if (!L) { setStatus('Select a chart in After Effects first', 'err'); return; }
+        if (edit.busy) { edit.again = true; return; }
+        edit.busy = true; renderEdit();
+        var sent = snap();
+        Host.update(spec(), L.id).then(function (res) {
+            edit.busy = false;
+            var p = res.split('|');
+            if (p[0] === 'OK') {
+                if (edit.loaded === L) { L.base = sent; L.applied = true; }
+                if (!auto) { setStatus('✓ Applied to “' + L.name + '”', 'ok'); }
+            } else { setStatus(p.slice(1).join('|') || res, 'err'); }
+            renderEdit();
+            if (edit.again) { edit.again = false; if (isDirty()) { apply(true); } }
+        });
+    }
+    $('apply').addEventListener('click', function () { apply(false); });
+    $('revert').addEventListener('click', function () {
+        if (edit.loaded && (!isDirty() || window.confirm('Throw away your changes and reload “' + edit.loaded.name + '”?'))) { load(edit.loaded); setStatus('Reloaded from After Effects', 'ok'); }
+    });
+    var AUTO_STORE = 'docugraph.autoApply', autoTimer = null;
+    try { $('autoApply').checked = localStorage.getItem(AUTO_STORE) === '1'; } catch (e) { /* storage off */ }
+    $('autoApply').addEventListener('change', function () {
+        try { localStorage.setItem(AUTO_STORE, $('autoApply').checked ? '1' : '0'); } catch (e) { /* storage off */ }
+        if ($('autoApply').checked && isDirty()) { apply(true); }
+    });
+    /* called after every rebuild: auto-apply waits until you pause editing */
+    function editChanged() {
+        if (mode !== 'edit' || !edit.loaded) { return; }
+        renderEdit();
+        clearTimeout(autoTimer);
+        if ($('autoApply').checked && isDirty()) { autoTimer = setTimeout(function () { if (isDirty()) { apply(true); } }, 1200); }
+    }
 
     $('ver').textContent = 'v' + DG.version;
     if (Host.available) {
@@ -481,11 +609,11 @@ title: 'title', subtitle: 'subtitle', source: 'source', credit: 'credit',
             if (p[0] === 'OK') { $('conn').textContent = 'AE ' + String(p[2]).split('x')[0]; $('conn').className = 'pill on'; $('conn').title = 'Connected to After Effects ' + p[2]; } else { $('conn').textContent = 'AE error'; $('conn').className = 'pill err'; setStatus('Could not start in After Effects: ' + p.slice(1).join('|'), 'err'); }
         });
     } else {
-        ['create', 'loadComp', 'update'].forEach(function (id) { $(id).classList.add('off'); });
+        ['create', 'apply', 'revert'].forEach(function (id) { $(id).classList.add('off'); });
         $('conn').title = 'Open this panel inside After Effects (Window → Extensions → DocuGraph) to create charts';
     }
     document.addEventListener('keydown', function (e) {
-        if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') { e.preventDefault(); $('create').click(); }
+        if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') { e.preventDefault(); if (mode === 'edit') { apply(false); } else { $('create').click(); } }
     });
     $('reset').addEventListener('click', function () {
         if (!window.confirm('Reset every setting to the defaults? Your data in the panel will be replaced by the example.')) { return; }

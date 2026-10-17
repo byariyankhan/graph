@@ -30,8 +30,9 @@
 
     Host.init = function () { return Host.eval('DGHost.init(' + Host.lit(Host.extensionPath()) + ')'); };
     Host.build = function (spec) { return Host.eval('DGHost.build(' + Host.lit(JSON.stringify(spec)) + ')'); };
-    Host.update = function (spec) { return Host.eval('DGHost.update(' + Host.lit(JSON.stringify(spec)) + ')'); };
-    Host.readActive = function () { return Host.eval('DGHost.readActive()'); };
+    Host.update = function (spec, id) { return Host.eval('DGHost.update(' + Host.lit(JSON.stringify(spec)) + ', ' + Number(id || 0) + ')'); };
+    Host.detect = function () { return Host.eval('DGHost.detect()'); };
+    Host.read = function (id) { return Host.eval('DGHost.read(' + Number(id || 0) + ')'); };
 
     root.DGHostBridge = Host;
 }(window));
