@@ -79,7 +79,7 @@ let builds = 0;
 for (const type of TYPES) {
     for (const v of DG.VARIANTS[type]) {
         for (const theme of DG.THEME_ORDER) {
-            for (const size of [[1920, 1080], [1080, 1920]]) {
+            for (const size of [[1920, 1080], [1080, 1920], [1080, 1080], [1080, 1350], [3840, 2160]]) {
                 t(`build ${type}:${v.id} ${theme} ${size}`, () => {
                     const smp = DG.sample(type, v.id);
                     const spec = Object.assign({}, smp, { type, variant: v.id, theme, width: size[0], height: size[1] });

@@ -117,7 +117,7 @@ assert.ok(init.indexOf('OK|') === 0, init);
 const DG = sb0.DG;
 for (const type of Object.keys(DG.VARIANTS)) {
     for (const v of DG.VARIANTS[type]) {
-        for (const theme of ['docDark', 'neon', 'vintage']) {
+        for (const theme of ['brand']) {
             const ae = makeAE(), sb = hostSandbox(ae);
             sb.DGHost.init(EXT);
             const spec = Object.assign({}, DG.sample(type, v.id), { type, variant: v.id, theme });

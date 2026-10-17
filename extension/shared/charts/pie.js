@@ -115,7 +115,7 @@ DG.charts.pie = function (ctx) {
                 var ls = Math.min(30 * u, (R - inner) * 0.3);
                 if (inner === 0) { ls = Math.min(34 * u, R * 0.12); }
                 var pl = ctx.countText('Pct ' + items[i].name, 0, items[i].pct, PF, cx + Math.sin(mid) * lr, cy - Math.cos(mid) * lr + ls * 0.36, ls,
-                    { align: 'center', color: DG.luma(items[i].color) > 0.6 ? '#111111' : '#FFFFFF' }, tt + d * 0.5, T.grow);
+                    { align: 'center', color: DG.luma(items[i].color) > 0.6 ? '#232322' : '#FFFFFF' }, tt + d * 0.5, T.grow);
                 if (live) { pl.live = { kind: 'pct', cells: cells, index: i, pos: { kind: 'sliceMid', cells: cells, index: i, start: start, span: span, cx: cx, cy: cy, r: lr, dy: ls * 0.36 } }; }
             }
             acc += items[i].v; tt += d;

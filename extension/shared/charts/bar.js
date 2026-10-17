@@ -177,7 +177,7 @@ DG.charts.bar = function (ctx) {
                         var inF = mode === 'percent' ? F : DG.extend({}, F, { ref: sv });
                         ctx.countText('Value ' + S[s].name + ' - ' + data.cats[i], 0, sv, inF, bx + bw / 2, (ya + yb) / 2 + 9 * u,
                             Math.min(24 * u, DG.fit(DG.fmt(sv, inF), 24 * u, bw * 0.9, 12 * u)),
-                            { align: 'center', color: DG.luma(colorOf(i, s)) > 0.6 ? '#111111' : '#FFFFFF' }, tss, segDur);
+                            { align: 'center', color: DG.luma(colorOf(i, s)) > 0.6 ? '#232322' : '#FFFFFF' }, tss, segDur);
                     }
                     base += sv;
                 }
@@ -264,7 +264,7 @@ DG.charts.bar = function (ctx) {
                 if (showVals && xr - xl > 70 * u && bh > 26 * u) {
                     ctx.countText('Value ' + S[s].name + ' - ' + data.cats[i], 0, hsv, mode === 'percent' ? F : DG.extend({}, F, { ref: hsv }),
                         (xl + xr) / 2, by + bh / 2 + 8 * u, Math.min(22 * u, bh * 0.6),
-                        { align: 'center', color: DG.luma(ctx.color(s)) > 0.6 ? '#111111' : '#FFFFFF' }, tst, segDur);
+                        { align: 'center', color: DG.luma(ctx.color(s)) > 0.6 ? '#232322' : '#FFFFFF' }, tst, segDur);
                 }
                 hbase += hsv;
             }

@@ -5,11 +5,13 @@ A CEP panel for Adobe After Effects that builds **documentary-grade animated cha
 
 Plan, roadmap and chart catalogue: **[PLAN.md](PLAN.md)**
 
-![Every style, Documentary Dark](docs/img/sheet-docDark-end-1920x1080.jpg)
+![Every style in the brand look](docs/img/sheet-brand-end-1920x1080.jpg)
 
 ## What's in v0.2
 
-**11 chart types / 39 styles.** Every style works with all **10 themes** and with HD, 4K, 9:16 Shorts, 1:1 and 4:5 output.
+**11 chart types / 39 styles.** Every style uses the **brand look**: yellow `#FFED54` highlights, a charcoal `#232322` background and white text. Output sizes are HD, 4K, 9:16 Shorts, 1:1 and 4:5.
+
+The extra series colours (magenta, blue, orange, green, violet, red) sit beside the yellow. They were checked so colour-blind viewers can tell neighbouring colours apart.
 
 | Type | Styles | Data columns | Live sliders in AE |
 |---|---|---|---|
@@ -27,7 +29,7 @@ Plan, roadmap and chart catalogue: **[PLAN.md](PLAN.md)**
 
 Numbers can use currency symbols, `%`, thousands separators or `K/M/B/T` suffixes.
 
-### The panel: five numbered steps
+### The panel: four numbered steps
 
 ![Panel](docs/img/panel.png)
 
@@ -42,8 +44,10 @@ Numbers can use currency symbols, `%`, thousands separators or `K/M/B/T` suffixe
 3. **Text:**
    - Title, subtitle, source and credit.
    - Number format: before/after text, decimals, short form (K/M/B or "million"), and a live example.
-4. **Look:** theme, highlight colour, background, size, fps and fonts.
-5. **Motion:** speed, length, easing, title animation, stagger and overshoot.
+4. **Style:**
+   - Format: size, frame rate, and a charcoal or transparent background.
+   - Motion: speed, length, easing, title animation, stagger and overshoot.
+   - Fonts (optional).
 
 Click **Create chart** or press Ctrl+Enter.
 - By default the chart drops into the open comp at the playhead, as a precomp.
@@ -56,7 +60,7 @@ Click **Create chart** or press Ctrl+Enter.
 - Everything is parented to a `DG Controller` null.
 - **Essential Properties** on the chart layer (Motion Bro style):
   - title / subtitle / source text
-  - every colour (one Color Control per theme role)
+  - every colour (one Color Control per colour role, so you can still change one chart by hand)
   - the data values
   - chart scale and position
 - **Live data:** with a supported style, changing a value slider redraws bars, slices, lines, labels and the axis.
@@ -80,7 +84,7 @@ To try the UI without AE, open `extension/client/index.html` in a browser. The p
 ## Development
 
 ```
-npm test        # ES3 lint, engine (780 builds), mock After Effects, AI helper, data checks, bad-data fuzz
+npm test        # ES3 lint, engine (195 builds: every style × 5 sizes), mock After Effects, AI helper, data checks, bad-data fuzz
 npm run sheet   # contact sheet of every style → docs/img
 ```
 

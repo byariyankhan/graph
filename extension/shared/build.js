@@ -14,7 +14,7 @@
 var DG = (typeof DG !== 'undefined') ? DG : {};
 
 DG.DEFAULTS = {
-    type: 'bar', variant: 'column', theme: 'docDark',
+    type: 'bar', variant: 'column', theme: 'brand',
     width: 1920, height: 1080, fps: 30, duration: 10,
     title: '', subtitle: '', source: '', credit: '',
     data: '', options: {}, format: {}, style: {},
@@ -91,7 +91,7 @@ DG.colorRoles = function (th) {
     r.push(['Up / Gain', th.up], ['Down / Loss', th.down]);
     r.push(['Dimmed', th.dim], ['Grid', th.grid], ['Axis', th.axis], ['Card', th.card], ['Background', th.bg]);
     if (th.bg2) { r.push(['Background Glow', th.bg2]); }
-    r.push(['Light Labels', '#FFFFFF'], ['Dark Labels', '#111111'], ['Year Labels', '#E6E6E6'], ['Year Labels Dark', '#333333']);
+    r.push(['Light Labels', '#FFFFFF'], ['Dark Labels', '#232322'], ['Year Labels', '#E6E6E6'], ['Year Labels Dark', '#333333']);
     return r;
 };
 

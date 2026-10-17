@@ -141,7 +141,7 @@ DG.timelineEras = function (ctx, ev) {
         var inside = DG.textW(sp.label, 26 * u) + 30 * u < xb - xa;
         var ls = Math.min(26 * u, bh * 0.42);
         ctx.text('Era Label ' + sp.label, sp.label, inside ? xa + 14 * u : xb + 12 * u, y + bh / 2 + (inside ? -2 * u : ls * 0.36), ls, {
-            color: inside ? (DG.luma(col) > 0.6 ? '#111111' : '#FFFFFF') : th.text, font: 'title', anim: ctx.fadeIn(ts + 0.2, 0)
+            color: inside ? (DG.luma(col) > 0.6 ? '#232322' : '#FFFFFF') : th.text, font: 'title', anim: ctx.fadeIn(ts + 0.2, 0)
         });
         if (inside && bh > 44 * u) {
             ctx.text('Era Years ' + sp.label, sp.ra + '–' + sp.rb, xa + 14 * u, y + bh / 2 + ls * 0.95, ls * 0.72, {

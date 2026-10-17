@@ -8,12 +8,12 @@
     var TYPES = DG.typeIds().map(function (id) { return { id: id, label: DG.TYPES[id].label, icon: DG.TYPES[id].icon }; });
 
     var DEFAULT = {
-        type: 'bar', variant: 'column', theme: 'docDark', size: '1920x1080', fps: 30, duration: 10,
+        type: 'bar', variant: 'column', theme: 'brand', size: '1920x1080', fps: 30, duration: 10,
         title: '', subtitle: '', source: '', credit: '', data: '',
         options: { highlight: '', sort: 'none', colorBy: 'single', values: true, grid: true, axis: true, endLabels: true, live: true },
         dataMode: 'table', insert: true,
         format: { prefix: '', suffix: '', decimals: '', grouping: 'intl', compact: 'none' },
-        style: { hiOn: false, hi: '#E8B04B', fTitle: '', fBody: '' },
+        style: { fTitle: '', fBody: '' },
         anim: { speed: 1, stagger: 0.12, ease: 'out', titleAnim: 'fade', overshoot: true },
         background: 'solid'
     };
@@ -30,7 +30,7 @@
         }
         if (!DG.VARIANTS[st.type]) { st.type = DEFAULT.type; st.variant = DEFAULT.variant; }
         if (!DG.VARIANTS[st.type].some(function (v) { return v.id === st.variant; })) { st.variant = DG.VARIANTS[st.type][0].id; }
-        if (!DG.THEMES[st.theme]) { st.theme = DEFAULT.theme; }
+        st.theme = 'brand'; delete st.style.hi; delete st.style.hiOn;  /* one brand look now */
         if (['intl', 'none'].indexOf(st.format.grouping) < 0) { st.format.grouping = 'intl'; }
         if (['none', 'en', 'words'].indexOf(st.format.compact) < 0) { st.format.compact = 'none'; }
         delete st.format.digits;
@@ -78,7 +78,7 @@
                 live: state.options.live !== false, periodSec: Number(state.options.periodSec) || 1
             },
             format: f,
-            style: { hi: st.hiOn ? st.hi : '', fonts: fonts },
+            style: { fonts: fonts },
             panel: state, insert: state.insert !== false,
             anim: {
                 speed: Number(state.anim.speed), stagger: Number(state.anim.stagger), ease: state.anim.ease,
@@ -151,20 +151,11 @@
         [].forEach.call(document.querySelectorAll('[data-not]'), function (el) { el.style.display = hit(el.getAttribute('data-not')) ? 'none' : ''; });
         $('liveRow').style.display = DG.isLive(state.type, state.variant) ? '' : 'none';
     }
-    function renderThemes() {
-        $('themes').innerHTML = DG.THEME_ORDER.map(function (id) {
-            var th = DG.THEMES[id];
-            return '<div class="theme' + (id === state.theme ? ' on' : '') + '" data-id="' + id + '" style="background:' + th.bg + ';color:' + th.text + '">' +
-                '<div class="nm" style="font-family:' + th.fonts.title.css.replace(/"/g, "'") + '">' + th.label + '</div><div class="sw">' +
-                th.palette.slice(0, 6).map(function (c) { return '<i style="background:' + c + '"></i>'; }).join('') + '</div></div>';
-        }).join('');
-    }
-
     /* form field ↔ state path bindings */
     var BIND = {
         size: 'size', fps: 'fps', data: 'data', highlight: 'options.highlight', sort: 'options.sort', colorBy: 'options.colorBy',
         values: 'options.values', showGrid: 'options.grid', axis: 'options.axis', endLabels: 'options.endLabels', live: 'options.live', periodSec: 'options.periodSec',
-        hi: 'style.hi', hiOn: 'style.hiOn', background: 'background', fTitle: 'style.fTitle', fBody: 'style.fBody',
+        background: 'background', fTitle: 'style.fTitle', fBody: 'style.fBody',
 title: 'title', subtitle: 'subtitle', source: 'source', credit: 'credit',
         prefix: 'format.prefix', suffix: 'format.suffix', decimals: 'format.decimals', grouping: 'format.grouping',
         compact: 'format.compact', speed: 'anim.speed', stagger: 'anim.stagger', ease: 'anim.ease',
@@ -183,20 +174,19 @@ title: 'title', subtitle: 'subtitle', source: 'source', credit: 'credit',
             if (el.type === 'checkbox') { el.checked = !!v; } else { el.value = v === undefined || v === null ? '' : v; }
         });
         $('speedV').textContent = '×' + Number(state.anim.speed).toFixed(1);
-        renderTypes(); renderThemes(); renderGrid(); renderGallery(); info();
+        renderTypes(); renderGrid(); renderGallery(); info();
     }
 
     /* ------------------------------------------------ gallery (Motion Bro style) */
     var gScenes = {}, gKey = '', gPlay = null;
     function renderGallery() {
-        var key = state.theme + '|' + (state.style.hiOn ? state.style.hi : '');
-        if (key !== gKey) {
-            gKey = key; gScenes = {};
+        if (!gKey) {
+            gKey = 'built'; gScenes = {};
             var html = [];
             TYPES.forEach(function (ty) {
                 (DG.VARIANTS[ty.id] || []).forEach(function (v) {
                     var smp = DG.sample(ty.id, v.id);
-                    var sc = DG.build(Object.assign({}, smp, { type: ty.id, variant: v.id, theme: state.theme, width: 960, height: 540, style: { hi: state.style.hiOn ? state.style.hi : '' } }));
+                    var sc = DG.build(Object.assign({}, smp, { type: ty.id, variant: v.id, theme: state.theme, width: 960, height: 540 }));
                     var id = ty.id + ':' + v.id;
                     gScenes[id] = sc;
                     html.push('<div class="gcard" data-id="' + id + '"><div class="th">' + PV.render(sc, sc.duration) + '</div><div class="gl"><b>' + ty.label + '</b> · ' + v.label + '</div></div>');
@@ -345,7 +335,6 @@ title: 'title', subtitle: 'subtitle', source: 'source', credit: 'credit',
         el.addEventListener(ev, function () {
             setPath(BIND[id], el.type === 'checkbox' ? el.checked : el.value);
             if (id === 'speed') { $('speedV').textContent = '×' + Number(el.value).toFixed(1); }
-            if (id === 'hi') { state.style.hiOn = true; $('hiOn').checked = true; }
             changed();
         });
     });
@@ -364,13 +353,6 @@ title: 'title', subtitle: 'subtitle', source: 'source', credit: 'credit',
         /* switch to the variant's own sample only if the user hasn't edited the data */
         var after = DG.sample(state.type, state.variant);
         if (before && after && before !== after && state.data === before.data) { applySample(); }
-        fillForm(); rebuild();
-    });
-    $('themes').addEventListener('click', function (e) {
-        var c = e.target.closest('.theme');
-        if (!c) { return; }
-        state.theme = c.dataset.id;
-        if (!state.style.hiOn) { state.style.hi = DG.THEMES[state.theme].hi; }
         fillForm(); rebuild();
     });
     $('tabs').addEventListener('click', function (e) {
@@ -606,7 +588,7 @@ title: 'title', subtitle: 'subtitle', source: 'source', credit: 'credit',
     if (Host.available) {
         Host.init().then(function (res) {
             var p = res.split('|');
-            if (p[0] === 'OK') { $('conn').textContent = 'AE ' + String(p[2]).split('x')[0]; $('conn').className = 'pill on'; $('conn').title = 'Connected to After Effects ' + p[2]; } else { $('conn').textContent = 'AE error'; $('conn').className = 'pill err'; setStatus('Could not start in After Effects: ' + p.slice(1).join('|'), 'err'); }
+            if (p[0] === 'OK') { $('conn').textContent = 'AE ' + String(p[2]).split('x')[0]; $('conn').className = 'pill conn on'; $('conn').title = 'Connected to After Effects ' + p[2]; } else { $('conn').textContent = 'AE error'; $('conn').className = 'pill conn err'; setStatus('Could not start in After Effects: ' + p.slice(1).join('|'), 'err'); }
         });
     } else {
         ['create', 'apply', 'revert'].forEach(function (id) { $(id).classList.add('off'); });

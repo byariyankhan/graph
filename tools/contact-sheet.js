@@ -7,7 +7,7 @@ const path = require('path');
 const { load } = require('../tests/load');
 
 const out = path.resolve(process.argv[2] || path.join(__dirname, '..', 'docs', 'img'));
-const theme = process.argv[3] || 'docDark';
+const theme = process.argv[3] || 'brand';
 const when = process.argv[4] || 'end';
 const size = (process.argv[5] || '1920x1080').split('x').map(Number);
 fs.mkdirSync(out, { recursive: true });
