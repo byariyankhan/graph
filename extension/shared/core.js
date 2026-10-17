@@ -350,6 +350,14 @@ DG.fit = function (s, size, maxW, minSize) {
     return Math.max(minSize || size * 0.5, size * maxW / w);
 };
 
+/* Shorten text with an ellipsis so it fits maxW at the given size. */
+DG.ellipsis = function (s, size, maxW) {
+    s = String(s);
+    if (DG.textW(s, size) <= maxW) { return s; }
+    while (s.length > 1 && DG.textW(s + '\u2026', size) > maxW) { s = s.substring(0, s.length - 1); }
+    return DG.trim(s) + '\u2026';
+};
+
 /* ------------------------------------------------------------- JSON (ES3) */
 
 DG.quote = function (s) {

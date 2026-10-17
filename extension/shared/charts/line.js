@@ -44,6 +44,7 @@ DG.charts.line = function (ctx) {
     }
     var lo = Infinity, hi = -Infinity;
     for (s = 0; s < nS; s++) { for (i = 0; i < n; i++) { if (cum[s][i] !== null) { lo = Math.min(lo, cum[s][i]); hi = Math.max(hi, cum[s][i]); } } }
+    if (!isFinite(lo) || !isFinite(hi)) { return ctx.empty('No numbers found — check the data columns'); }
     /* live data: every point becomes a slider in AE (not for stacked area) */
     var live = ctx.live && !stacked && lo >= 0;
     var zero = live || area || o.zero === true || (o.zero !== false && lo >= 0 && lo < hi * 0.45);

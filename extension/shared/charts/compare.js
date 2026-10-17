@@ -67,7 +67,8 @@ DG.cmpSlope = function (ctx, data) {
         ctx.add({ type: 'line', name: 'Slope ' + data.cats[i], x1: xA, y1: ya[i], x2: xB, y2: yb[i], stroke: col, sw: (hl ? 5 : 3) * u, cap: 'round', glow: th.glow && hl, anim: ctx.A('draw', t0 + 0.2, T.grow) });
         ctx.add({ type: 'circle', name: 'Dot A ' + data.cats[i], layer: 'Dots', cx: xA, cy: ya[i], r: 9 * u, fill: col, anim: ctx.A('pop', t0, T.pop, { over: ctx.over }) });
         ctx.add({ type: 'circle', name: 'Dot B ' + data.cats[i], layer: 'Dots', cx: xB, cy: yb[i], r: 9 * u, fill: col, anim: ctx.A('pop', t0 + 0.2 + T.grow * 0.9, T.pop, { over: ctx.over }) });
-        ctx.text('Label A ' + data.cats[i], data.cats[i] + '  ' + DG.fmt(A.values[i], DG.extend({}, F, { ref: A.values[i] })), xA - 18 * u, la[i] + labS * 0.36, labS,
+        var aVal = '  ' + DG.fmt(A.values[i], DG.extend({}, F, { ref: A.values[i] }));
+        ctx.text('Label A ' + data.cats[i], DG.ellipsis(data.cats[i], labS, labW - 30 * u - DG.textW(aVal, labS)) + aVal, xA - 18 * u, la[i] + labS * 0.36, labS,
             { align: 'right', color: hl ? th.text : th.muted, font: hl && o.highlight ? 'title' : 'body', anim: ctx.fadeIn(t0, 0) });
         ctx.countText('Label B ' + data.cats[i], A.values[i], B.values[i], DG.extend({}, F, { ref: B.values[i] }), xB + 18 * u, lb[i] + labS * 0.36, labS,
             { color: hl ? col : th.muted }, t0 + 0.2, T.grow);

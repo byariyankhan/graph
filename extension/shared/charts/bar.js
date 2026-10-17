@@ -106,13 +106,18 @@ DG.charts.bar = function (ctx) {
         DG.yGrid(ctx, tk, px, px + pw, Y, F, { liveMax: liveMax });
         var band = pw / n, bw = band * (1 - gap);
         var labelSize = catSize;
-        for (k = 0; k < n; k++) { labelSize = Math.min(labelSize, DG.fit(data.cats[order[k]], catSize, band * 0.96, 14 * u)); }
+        /* readable labels: if they would be tiny, show every 2nd/3rd one instead */
+        var labEvery = 1, longest = 0;
+        for (k = 0; k < n; k++) { longest = Math.max(longest, DG.textW(data.cats[order[k]], 18 * u)); }
+        while (labEvery < n && longest > band * labEvery * 0.95) { labEvery++; }
+        for (k = 0; k < n; k++) { labelSize = Math.min(labelSize, DG.fit(data.cats[order[k]], catSize, band * labEvery * 0.96, 16 * u)); }
 
         for (k = 0; k < n; k++) {
             i = order[k];
             var bx = px + band * k + (band - bw) / 2, cx = px + band * (k + 0.5);
             var t0 = catStart(k);
-            ctx.text('Label ' + data.cats[i], data.cats[i], cx, py + ph + 40 * u, labelSize, {
+            var isHlCat = o.highlight && DG.inList(data.cats[i], o.highlight);
+            if (k % labEvery === 0 || isHlCat) ctx.text('Label ' + data.cats[i], DG.ellipsis(data.cats[i], labelSize, band * labEvery * 0.98), cx, py + ph + 40 * u, labelSize, {
                 align: 'center', color: (o.highlight && DG.inList(data.cats[i], o.highlight)) ? th.text : th.muted,
                 font: (o.highlight && DG.inList(data.cats[i], o.highlight)) ? 'title' : 'body', anim: ctx.fadeIn(t0, 10 * u)
             });
@@ -144,7 +149,8 @@ DG.charts.bar = function (ctx) {
                     }
                     var vs = DG.fmt(v3, DG.extend({}, F, { ref: v3 }));
                     var vSize = Math.min(28 * u, DG.fit(vs, 28 * u, sub * 1.1, 12 * u));
-                    if (showVals && (vSize >= 15 * u || o.values === true)) {
+                    /* value labels only where they fit (thin grouped bars would collide) */
+                    if (showVals && ((vSize >= 15 * u && sub >= 30 * u) || o.values === true)) {
                         var vl = ctx.countText('Value ' + nm, 0, v3, F, mid, v3 >= 0 ? y1 - 14 * u : y1 + vSize + 10 * u, vSize,
                             { align: 'center', color: th.text }, ts, T.grow);
                         if (live && mode !== 'lolli') { vl.live = { kind: 'value', cell: cellOf[i][s], pos: { kind: 'barEnd', dir: 'up', base: y0, len: ph, max: liveMax, off: 14 * u, at: mid } }; }
