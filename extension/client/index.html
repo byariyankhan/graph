@@ -9,146 +9,155 @@
 <body>
     <header class="top">
         <div class="brand">Docu<b>Graph</b> <span id="ver"></span></div>
-        <div id="status" class="status">Preview mode</div>
+        <div class="topright">
+            <span id="conn" class="pill off" title="Connection to After Effects">Preview only</span>
+            <button id="reset" class="icon small" title="Reset all settings to the defaults">⟲</button>
+        </div>
     </header>
+    <div id="status" class="status" role="status"></div>
 
     <section class="preview">
+        <div id="meta" class="meta"></div>
         <div id="stage" class="stage"></div>
         <div class="transport">
             <button id="play" class="icon" title="Play / pause (Space)">▶</button>
-            <input id="scrub" type="range" min="0" max="1000" value="1000">
+            <input id="scrub" type="range" min="0" max="1000" value="1000" title="Scrub through the animation">
             <span id="time" class="time">0.0s</span>
         </div>
     </section>
 
     <nav class="tabs" id="tabs">
-        <button data-tab="gallery" class="on">Gallery</button>
-        <button data-tab="chart">Chart</button>
-        <button data-tab="data">Data</button>
-        <button data-tab="style">Style</button>
-        <button data-tab="text">Text &amp; Numbers</button>
-        <button data-tab="anim">Motion</button>
+        <button data-tab="chart" class="on"><i>1</i>Chart</button>
+        <button data-tab="data"><i>2</i>Data</button>
+        <button data-tab="text"><i>3</i>Text</button>
+        <button data-tab="style"><i>4</i>Look</button>
+        <button data-tab="anim"><i>5</i>Motion</button>
     </nav>
 
     <main class="pages">
-        <!-- CHART -->
-        <div class="page on" id="page-gallery">
-            <p class="hint">Hover to play · click to use. Theme from the Style tab applies to all.</p>
-            <div id="gallery" class="gallery"></div>
-        </div>
-
-        <div class="page" id="page-chart">
-            <label class="lbl">Chart type</label>
-            <div id="types" class="types"></div>
-            <label class="lbl">Variant</label>
-            <div id="variants" class="pills"></div>
-            <label class="lbl">Output size</label>
-            <div class="row">
-                <select id="size">
-                    <option value="1920x1080">1920×1080 · HD</option>
-                    <option value="3840x2160">3840×2160 · 4K</option>
-                    <option value="1080x1920">1080×1920 · Shorts / Reels</option>
-                    <option value="1080x1080">1080×1080 · Square</option>
-                    <option value="1080x1350">1080×1350 · Portrait 4:5</option>
-                </select>
-                <select id="fps">
-                    <option>24</option><option>25</option><option selected>30</option><option>50</option><option>60</option>
-                </select>
+        <!-- 1 CHART -->
+        <div class="page on" id="page-chart">
+            <div class="picked">
+                <div class="pickedname" id="pickedName"></div>
+                <div id="variants" class="pills"></div>
             </div>
-            <label class="mini live"><input type="checkbox" id="insert" checked> <b>Add to the open comp</b> at the playhead (as a precomp). Edit it later from the layer's <b>Essential Properties</b> — title, colours and data.</label>
+            <div id="types" class="chips" title="Show only one kind of chart"></div>
+            <div id="gallery" class="gallery"></div>
+            <p class="hint center">Hover a card to play it · click to use it</p>
         </div>
 
-        <!-- DATA -->
+        <!-- 2 DATA -->
         <div class="page" id="page-data">
-            <div class="aibox">
-                <div class="aititle">✨ Get the data from AI</div>
-                <textarea id="aiAsk" rows="2" placeholder="What data? e.g. GDP per person of Bangladesh, India and Pakistan, 1990–2023, every 5 years"></textarea>
-                <div class="row">
-                    <button id="aiCopy" class="ghost wide">① Copy prompt → paste into ChatGPT / Claude</button>
-                </div>
-                <textarea id="aiPaste" rows="3" placeholder="② Paste the AI's whole answer here — table, title and source fill in automatically"></textarea>
+            <details class="aibox" id="aiBox">
+                <summary class="aititle">✨ Get the data from AI <span class="hint">— no typing tables</span></summary>
+                <textarea id="aiAsk" rows="2" placeholder="What data? e.g. GDP per person of India, China and Brazil, 1990–2023, every 5 years"></textarea>
+                <button id="aiCopy" class="ghost wide">① Copy prompt → paste it into ChatGPT / Claude / Gemini</button>
+                <textarea id="aiPaste" rows="3" placeholder="② Paste the AI's whole answer here — table, title and source fill in by themselves"></textarea>
                 <details class="aidirect">
-                    <summary>Or ask Claude directly (your API key, searches the web)</summary>
+                    <summary>Or ask Claude directly (your own API key, searches the web)</summary>
                     <input id="aiKey" type="password" placeholder="sk-ant-…" autocomplete="off">
                     <label class="mini"><input type="checkbox" id="aiRemember"> Remember the key on this computer</label>
                     <button id="aiGen" class="ghost wide">Generate with Claude</button>
                 </details>
                 <p class="hint">AI can be wrong — check the numbers and the source before you publish.</p>
-            </div>
+            </details>
+
             <div class="row between">
-                <label class="lbl">Data <span class="hint" id="dataHint"></span></label>
+                <label class="lbl">Your data <span class="hint" id="dataHint"></span></label>
                 <div class="seg" id="dataMode"><button data-m="table" class="on">Table</button><button data-m="text">Paste / text</button></div>
             </div>
             <div id="gridWrap" class="gridwrap"><table id="grid" class="grid"></table></div>
-            <div class="row" id="gridBtns">
-                <button id="addRow" class="ghost">+ Row</button>
-                <button id="addCol" class="ghost">+ Column</button>
-                <button id="delCol" class="ghost">− Last column</button>
-            </div>
             <textarea id="data" spellcheck="false" rows="10" style="display:none" placeholder="Paste from Excel / Google Sheets, or CSV"></textarea>
-            <div class="row">
-                <button id="loadSample" class="ghost">Load sample</button>
-                <span id="parseInfo" class="hint"></span>
+            <div class="row" id="gridBtns">
+                <button id="addRow" class="ghost" title="Add an empty row at the bottom">+ Row</button>
+                <button id="addCol" class="ghost" title="Add a column (a new series)">+ Column</button>
+                <button id="delCol" class="ghost" title="Remove the last column">− Column</button>
+                <button id="loadSample" class="ghost" title="Replace the data with the example for this chart">Example data</button>
             </div>
-            <label class="mini live"><input type="checkbox" id="live" checked> <b>Live data in AE</b> — every value becomes a slider on “DG Controller”; change it in AE and the chart redraws (bar, pie/donut, big number)</label>
-            <label class="lbl">Highlight (comma separated names)</label>
-            <input id="highlight" placeholder="e.g. Bangladesh">
-            <div class="row">
-                <div><label class="lbl">Sort</label>
-                    <select id="sort"><option value="none">As pasted</option><option value="desc">Largest first</option><option value="asc">Smallest first</option></select></div>
-                <div><label class="lbl">Colour bars by</label>
-                    <select id="colorBy"><option value="single">One colour</option><option value="category">Each category</option></select></div>
-            </div>
-            <div class="checks">
-                <label><input type="checkbox" id="values" checked> Value labels</label>
-                <label><input type="checkbox" id="grid" checked> Grid</label>
-                <label><input type="checkbox" id="axis" checked> Axis labels</label>
-                <label><input type="checkbox" id="endLabels" checked> Line tip labels</label>
+            <div class="row between"><span id="parseInfo" class="hint"></span></div>
+            <ul id="checks" class="checklist"></ul>
+
+            <div class="group">
+                <div class="grouptitle">Options for this chart</div>
+                <label class="lbl">Highlight <span class="hint">— names to make stand out, comma separated</span></label>
+                <input id="highlight" placeholder="e.g. Brazil">
+                <div class="row">
+                    <div data-for="bar pie compare:dumbbell compare:diverging"><label class="lbl">Order</label>
+                        <select id="sort"><option value="none">As in the table</option><option value="desc">Largest first</option><option value="asc">Smallest first</option></select></div>
+                    <div data-for="bar:column bar:horizontal"><label class="lbl">Colours</label>
+                        <select id="colorBy"><option value="single">One colour</option><option value="category">One per bar</option></select></div>
+                </div>
+                <div class="checks">
+                    <label data-not="timeline race"><input type="checkbox" id="values" checked> Numbers on the chart</label>
+                    <label data-for="bar line scatter pyramid compare:waterfall compare:dumbbell"><input type="checkbox" id="showGrid" checked> Grid lines</label>
+                    <label data-for="bar line scatter pyramid compare:waterfall"><input type="checkbox" id="axis" checked> Axis numbers</label>
+                    <label data-for="line"><input type="checkbox" id="endLabels" checked> Moving dot + label on lines</label>
+                </div>
+                <label class="mini live" id="liveRow"><input type="checkbox" id="live" checked> <b>Live data in After Effects</b> — every number becomes a slider on “DG Controller” and in Essential Properties; change it and the chart redraws.</label>
             </div>
         </div>
 
-        <!-- STYLE -->
-        <div class="page" id="page-style">
-            <label class="lbl">Theme</label>
-            <div id="themes" class="themes"></div>
-            <div class="row">
-                <div><label class="lbl">Accent / highlight</label><input id="hi" type="color" value="#E8B04B"><label class="mini"><input type="checkbox" id="hiOn"> override</label></div>
-                <div><label class="lbl">Background</label>
-                    <select id="background"><option value="solid">Theme background</option><option value="transparent">Transparent (overlay on footage)</option></select></div>
-            </div>
-            <label class="lbl">Fonts (PostScript names — optional)</label>
-            <div class="row">
-                <input id="fTitle" placeholder="Title e.g. Montserrat-Bold">
-                <input id="fBody" placeholder="Body e.g. Inter-Regular">
-            </div>
-        </div>
-
-        <!-- TEXT -->
+        <!-- 3 TEXT -->
         <div class="page" id="page-text">
-            <label class="lbl">Title</label><input id="title">
-            <label class="lbl">Subtitle</label><input id="subtitle">
+            <label class="lbl">Title</label><input id="title" placeholder="Short headline">
+            <label class="lbl">Subtitle</label><input id="subtitle" placeholder="What is measured, units, years">
             <div class="row">
                 <div><label class="lbl">Source</label><input id="source" placeholder="Source: World Bank"></div>
                 <div><label class="lbl">Credit / channel</label><input id="credit" placeholder="@yourchannel"></div>
             </div>
-            <label class="lbl">Number format</label>
-            <div class="row">
-                <input id="prefix" placeholder="Prefix ($, €)">
-                <input id="suffix" placeholder="Suffix (%, M)">
-                <input id="decimals" type="number" min="0" max="4" placeholder="Decimals">
+            <div class="group">
+                <div class="grouptitle">Numbers</div>
+                <div class="row">
+                    <div><label class="lbl">Before</label><input id="prefix" placeholder="$  €"></div>
+                    <div><label class="lbl">After</label><input id="suffix" placeholder="%  M  km²"></div>
+                    <div><label class="lbl">Decimals</label><input id="decimals" type="number" min="0" max="4" placeholder="auto"></div>
+                </div>
+                <div class="row">
+                    <div><label class="lbl">Big numbers</label>
+                        <select id="compact"><option value="none">Full (1,234,567)</option><option value="en">Short (1.2M)</option><option value="words">Words (1.2 million)</option></select></div>
+                    <div><label class="lbl">Thousands separator</label>
+                        <select id="grouping"><option value="intl">1,234,567</option><option value="none">1234567</option></select></div>
+                </div>
+                <p class="hint" id="fmtDemo"></p>
             </div>
-            <div class="row">
-                <select id="grouping"><option value="intl">1,234,567</option><option value="none">1234567</option></select>
-                <select id="compact"><option value="none">Full number</option><option value="en">K / M / B</option><option value="words">million / billion</option></select>
-            </div>
-            <p class="hint" id="fmtDemo"></p>
         </div>
 
-        <!-- MOTION -->
+        <!-- 4 LOOK -->
+        <div class="page" id="page-style">
+            <label class="lbl">Theme</label>
+            <div id="themes" class="themes"></div>
+            <div class="row">
+                <div><label class="lbl">Highlight colour</label>
+                    <div class="row tight"><input id="hi" type="color" value="#E8B04B"><label class="mini"><input type="checkbox" id="hiOn"> use it</label></div></div>
+                <div><label class="lbl">Background</label>
+                    <select id="background"><option value="solid">Theme background</option><option value="transparent">Transparent (over footage)</option></select></div>
+            </div>
+            <div class="row">
+                <div><label class="lbl">Size</label>
+                    <select id="size">
+                        <option value="1920x1080">1920×1080 · HD</option>
+                        <option value="3840x2160">3840×2160 · 4K</option>
+                        <option value="1080x1920">1080×1920 · Shorts / Reels</option>
+                        <option value="1080x1080">1080×1080 · Square</option>
+                        <option value="1080x1350">1080×1350 · Portrait 4:5</option>
+                    </select></div>
+                <div><label class="lbl">Frame rate</label>
+                    <select id="fps"><option>24</option><option>25</option><option selected>30</option><option>50</option><option>60</option></select></div>
+            </div>
+            <details class="group">
+                <summary class="grouptitle">Fonts <span class="hint">— optional, PostScript names</span></summary>
+                <div class="row">
+                    <input id="fTitle" placeholder="Titles & numbers e.g. Montserrat-Bold">
+                    <input id="fBody" placeholder="Labels e.g. Inter-Regular">
+                </div>
+            </details>
+        </div>
+
+        <!-- 5 MOTION -->
         <div class="page" id="page-anim">
             <div class="row">
-                <div><label class="lbl">Speed</label><input id="speed" type="range" min="0.4" max="2.5" step="0.1" value="1"><span id="speedV" class="hint"></span></div>
-                <div><label class="lbl">Stagger (s)</label><input id="stagger" type="number" min="0" max="1" step="0.02" value="0.12"></div>
+                <div><label class="lbl">Speed <span id="speedV" class="hint"></span></label><input id="speed" type="range" min="0.4" max="2.5" step="0.1" value="1"></div>
+                <div><label class="lbl">Comp length (seconds)</label><input id="duration" type="number" min="3" max="120" value="10"></div>
             </div>
             <div class="row">
                 <div><label class="lbl">Easing</label>
@@ -157,21 +166,19 @@
                     <select id="titleAnim"><option value="fade">Fade up</option><option value="type">Typewriter</option></select></div>
             </div>
             <div class="row">
-                <div><label class="lbl">Bar race: seconds per year/period</label><input id="periodSec" type="number" min="0.2" max="10" step="0.1" value="1"></div>
-                <div></div>
+                <div><label class="lbl">Delay between items (s)</label><input id="stagger" type="number" min="0" max="1" step="0.02" value="0.12"></div>
+                <div data-for="race scatter:gapminder"><label class="lbl">Seconds per year</label><input id="periodSec" type="number" min="0.2" max="10" step="0.1" value="1"></div>
             </div>
-            <div class="row">
-                <div><label class="lbl">Comp length (s)</label><input id="duration" type="number" min="3" max="120" value="10"></div>
-                <label class="mini" style="align-self:end"><input type="checkbox" id="overshoot" checked> Overshoot / bounce</label>
-            </div>
+            <label class="mini"><input type="checkbox" id="overshoot" checked> Small bounce at the end of each move</label>
         </div>
     </main>
 
     <footer class="foot">
-        <button id="create" class="primary">Create new comp</button>
+        <label class="mini insert"><input type="checkbox" id="insert" checked> Put it in the open comp at the playhead</label>
+        <button id="create" class="primary" title="Ctrl + Enter">Create chart</button>
         <div class="row">
-            <button id="loadComp" class="ghost wide" title="Select the chart layer (or open its comp), then load its settings here">⤓ Load selected chart</button>
-            <button id="update" class="ghost wide" title="Rebuild the selected / open DocuGraph chart">⟳ Update chart</button>
+            <button id="loadComp" class="ghost wide" title="Select the chart layer in your timeline (or open its comp), then click">⤓ Edit selected chart</button>
+            <button id="update" class="ghost wide" title="Rebuild the selected chart with these settings — keeps its name and place">⟳ Update it</button>
         </div>
     </footer>
 
@@ -180,6 +187,7 @@
     <script src="js/preview.js"></script>
     <script src="js/vendor/anthropic.js"></script>
     <script src="js/ai.js"></script>
+    <script src="js/check.js"></script>
     <script src="js/host.js"></script>
     <script src="js/panel.js"></script>
 </body>

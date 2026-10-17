@@ -18,9 +18,27 @@
         background: 'solid'
     };
 
+    /* Saved / loaded settings are merged over the defaults so a setting added
+     * later never comes back undefined, and values that no longer exist are
+     * reset (e.g. old number formats). */
+    function migrate(saved) {
+        var st = JSON.parse(JSON.stringify(DEFAULT)), k;
+        if (!saved || typeof saved !== 'object') { return null; }
+        for (k in saved) {
+            if (!saved.hasOwnProperty(k)) { continue; }
+            if (st[k] && typeof st[k] === 'object' && saved[k] && typeof saved[k] === 'object') { st[k] = Object.assign(st[k], saved[k]); } else { st[k] = saved[k]; }
+        }
+        if (!DG.VARIANTS[st.type]) { st.type = DEFAULT.type; st.variant = DEFAULT.variant; }
+        if (!DG.VARIANTS[st.type].some(function (v) { return v.id === st.variant; })) { st.variant = DG.VARIANTS[st.type][0].id; }
+        if (!DG.THEMES[st.theme]) { st.theme = DEFAULT.theme; }
+        if (['intl', 'none'].indexOf(st.format.grouping) < 0) { st.format.grouping = 'intl'; }
+        if (['none', 'en', 'words'].indexOf(st.format.compact) < 0) { st.format.compact = 'none'; }
+        delete st.format.digits;
+        return st;
+    }
     var state;
-    try { state = JSON.parse(localStorage.getItem(STORE)); } catch (e) { state = null; }
-    if (!state || !state.type) { state = JSON.parse(JSON.stringify(DEFAULT)); applySample(); }
+    try { state = migrate(JSON.parse(localStorage.getItem(STORE))); } catch (e) { state = null; }
+    if (!state) { state = JSON.parse(JSON.stringify(DEFAULT)); applySample(); }
 
     function save() { try { localStorage.setItem(STORE, JSON.stringify(state)); } catch (e) { /* private mode */ } }
 
@@ -67,7 +85,7 @@
     function rebuild() {
         try {
             scene = DG.build(spec());
-            sizeStage();
+            sizeStage(); renderMeta();
             if (!playing) { t = scene.duration; }
             draw();
         } catch (e) { setStatus('Preview error: ' + e.message, 'err'); }
@@ -102,14 +120,29 @@
     }
 
     /* --------------------------------------------------------------- UI */
+    var icon = function (id) { return '<svg viewBox="0 0 44 30" fill="currentColor" stroke="currentColor">' + DG.TYPES[id].icon + '</svg>'; };
+    var filter = 'all';
     function renderTypes() {
-        $('types').innerHTML = TYPES.map(function (ty) {
-            return '<div class="type' + (ty.id === state.type ? ' on' : '') + '" data-id="' + ty.id + '"><svg viewBox="0 0 44 30" fill="currentColor" stroke="currentColor">' + ty.icon + '</svg>' + ty.label + '</div>';
+        $('types').innerHTML = '<span class="chip' + (filter === 'all' ? ' on' : '') + '" data-id="all">All</span>' + TYPES.map(function (ty) {
+            return '<span class="chip' + (filter === ty.id ? ' on' : '') + '" data-id="' + ty.id + '">' + icon(ty.id) + ty.label + '</span>';
         }).join('');
+        var vLabel = (DG.VARIANTS[state.type].filter(function (v) { return v.id === state.variant; })[0] || {}).label || '';
+        $('pickedName').innerHTML = icon(state.type) + '<b>' + DG.TYPES[state.type].label + '</b> · ' + vLabel;
         $('variants').innerHTML = (DG.VARIANTS[state.type] || []).map(function (v) {
             return '<span class="pill' + (v.id === state.variant ? ' on' : '') + '" data-id="' + v.id + '">' + v.label + '</span>';
         }).join('');
         $('dataHint').textContent = '— columns: ' + DG.typeInfo(state.type, state.variant, 'columns');
+        applyContext();
+    }
+    /* Show only the options that do something for the current chart.
+     * data-for="bar line:smooth" = shown for those types / type:variant;
+     * data-not="…" = hidden for those. */
+    function applyContext() {
+        var key = state.type, kv = state.type + ':' + state.variant;
+        var hit = function (list) { return (' ' + list + ' ').indexOf(' ' + key + ' ') >= 0 || (' ' + list + ' ').indexOf(' ' + kv + ' ') >= 0; };
+        [].forEach.call(document.querySelectorAll('[data-for]'), function (el) { el.style.display = hit(el.getAttribute('data-for')) ? '' : 'none'; });
+        [].forEach.call(document.querySelectorAll('[data-not]'), function (el) { el.style.display = hit(el.getAttribute('data-not')) ? 'none' : ''; });
+        $('liveRow').style.display = DG.isLive(state.type, state.variant) ? '' : 'none';
     }
     function renderThemes() {
         $('themes').innerHTML = DG.THEME_ORDER.map(function (id) {
@@ -123,7 +156,7 @@
     /* form field ↔ state path bindings */
     var BIND = {
         size: 'size', fps: 'fps', data: 'data', highlight: 'options.highlight', sort: 'options.sort', colorBy: 'options.colorBy',
-        values: 'options.values', grid: 'options.grid', axis: 'options.axis', endLabels: 'options.endLabels', live: 'options.live', periodSec: 'options.periodSec',
+        values: 'options.values', showGrid: 'options.grid', axis: 'options.axis', endLabels: 'options.endLabels', live: 'options.live', periodSec: 'options.periodSec',
         hi: 'style.hi', hiOn: 'style.hiOn', background: 'background', fTitle: 'style.fTitle', fBody: 'style.fBody',
 title: 'title', subtitle: 'subtitle', source: 'source', credit: 'credit',
         prefix: 'format.prefix', suffix: 'format.suffix', decimals: 'format.decimals', grouping: 'format.grouping',
@@ -164,7 +197,10 @@ title: 'title', subtitle: 'subtitle', source: 'source', credit: 'credit',
             });
             $('gallery').innerHTML = html.join('');
         }
-        [].forEach.call(document.querySelectorAll('.gcard'), function (c) { c.classList.toggle('on', c.dataset.id === state.type + ':' + state.variant); });
+        [].forEach.call(document.querySelectorAll('.gcard'), function (c) {
+            c.classList.toggle('on', c.dataset.id === state.type + ':' + state.variant);
+            c.style.display = filter === 'all' || c.dataset.id.split(':')[0] === filter ? '' : 'none';
+        });
     }
     function stopThumb() {
         if (!gPlay) { return; }
@@ -274,11 +310,24 @@ title: 'title', subtitle: 'subtitle', source: 'source', credit: 'credit',
     });
     function info() {
         var tb = DG.parseTable(state.data), sd = DG.seriesData(tb);
-        $('parseInfo').textContent = tb.rows.length + ' rows · ' + sd.series.length + ' numeric column' + (sd.series.length === 1 ? '' : 's');
+        $('parseInfo').textContent = tb.rows.length + ' rows · ' + sd.series.length + ' number column' + (sd.series.length === 1 ? '' : 's');
+        var probs = window.DGCheck ? DGCheck.check(state.type, state.variant, state.data) : [];
+        $('checks').innerHTML = probs.length ? probs.map(function (p) { return '<li class="' + p.level + '">' + escHtml(p.text) + '</li>'; }).join('')
+            : '<li class="good">Data looks good for this chart.</li>';
+        var errs = probs.filter(function (p) { return p.level === 'error'; }).length;
+        var tab = document.querySelector('.tabs button[data-tab="data"]');
+        if (tab) { tab.classList.toggle('warn', errs > 0); }
         var f = spec().format;
         $('fmtDemo').textContent = 'Example: ' + DG.fmt(1234567.891, f) + '   ·   ' + DG.fmt(173000000, Object.assign({}, f, { ref: 173000000 }));
     }
 
+    function escHtml(x) { return String(x).replace(/&/g, '&amp;').replace(/</g, '&lt;'); }
+    function renderMeta() {
+        if (!scene) { return; }
+        var live = DG.isLive(state.type, state.variant) && state.options.live !== false;
+        $('meta').innerHTML = '<span>' + scene.width + '×' + scene.height + '</span><span>' + state.fps + ' fps</span><span>' + scene.duration.toFixed(1) + ' s</span>' +
+            '<span class="' + (live ? 'yes' : 'no') + '" title="' + (live ? 'Numbers can be changed later with sliders in After Effects' : 'Change data later with Edit selected chart → Update it') + '">' + (live ? '● Live sliders' : '○ Static data') + '</span>';
+    }
     var timer = null;
     function changed() { info(); clearTimeout(timer); timer = setTimeout(rebuild, 120); }
 
@@ -295,10 +344,10 @@ title: 'title', subtitle: 'subtitle', source: 'source', credit: 'credit',
     });
 
     $('types').addEventListener('click', function (e) {
-        var c = e.target.closest('.type');
-        if (!c || c.dataset.id === state.type) { return; }
-        state.type = c.dataset.id; state.variant = DG.VARIANTS[state.type][0].id;
-        applySample(); fillForm(); rebuild();
+        var c = e.target.closest('.chip');
+        if (!c) { return; }
+        filter = c.dataset.id;
+        renderTypes(); renderGallery();
     });
     $('variants').addEventListener('click', function (e) {
         var c = e.target.closest('.pill');
@@ -385,10 +434,19 @@ title: 'title', subtitle: 'subtitle', source: 'source', credit: 'credit',
     $('aiAsk').value = state.aiAsk || '';
     $('aiAsk').addEventListener('input', function () { state.aiAsk = $('aiAsk').value; save(); });
 
-    function setStatus(msg, cls) { var s = $('status'); s.textContent = msg; s.className = 'status' + (cls ? ' ' + cls : ''); s.title = msg; }
+    var statusTimer = null;
+    /* ok / info messages fade after a few seconds; errors stay until clicked */
+    function setStatus(msg, cls) {
+        var s = $('status');
+        clearTimeout(statusTimer);
+        s.textContent = msg; s.title = cls === 'err' ? 'Click to dismiss' : msg;
+        s.className = 'status show' + (cls ? ' ' + cls : '');
+        if (cls !== 'err') { statusTimer = setTimeout(function () { s.className = 'status' + (cls ? ' ' + cls : ''); }, cls === 'ok' ? 6000 : 9000); }
+    }
+    $('status').addEventListener('click', function () { $('status').className = 'status'; });
 
     function run(btnId, call, verb) {
-        if (!Host.available) { setStatus('Open this panel inside After Effects to do this', 'err'); return; }
+        if (!Host.available) { setStatus('This works inside After Effects — open Window → Extensions → DocuGraph there', 'err'); return; }
         var btn = $(btnId);
         btn.disabled = true; setStatus(verb + '…');
         call().then(function (res) {
@@ -402,14 +460,14 @@ title: 'title', subtitle: 'subtitle', source: 'source', credit: 'credit',
     $('create').addEventListener('click', function () { run('create', function () { return Host.build(spec()); }, 'Created'); });
     $('update').addEventListener('click', function () { run('update', function () { return Host.update(spec()); }, 'Updated'); });
     $('loadComp').addEventListener('click', function () {
-        if (!Host.available) { setStatus('Open this panel inside After Effects to do this', 'err'); return; }
+        if (!Host.available) { setStatus('This works inside After Effects — open Window → Extensions → DocuGraph there', 'err'); return; }
         Host.readActive().then(function (res) {
             var i = res.indexOf('|'), tag = res.substring(0, i), body = res.substring(i + 1);
             if (tag !== 'OK') { setStatus(tag === 'NONE' ? 'Select the chart layer in your comp (or open the chart comp) first' : body, 'err'); return; }
             try {
                 var sp = JSON.parse(body);
                 if (!sp.panel) { setStatus('This comp was made by an older version — settings could not be loaded', 'err'); return; }
-                state = Object.assign(JSON.parse(JSON.stringify(DEFAULT)), sp.panel);
+                state = migrate(sp.panel);
                 fillForm(); rebuild();
                 setStatus('✓ Loaded the chart — edit, then “Update chart”', 'ok');
             } catch (e) { setStatus('Could not read comp settings: ' + e.message, 'err'); }
@@ -420,11 +478,20 @@ title: 'title', subtitle: 'subtitle', source: 'source', credit: 'credit',
     if (Host.available) {
         Host.init().then(function (res) {
             var p = res.split('|');
-            if (p[0] === 'OK') { setStatus('Connected · After Effects ' + p[2], 'ok'); } else { setStatus('Host error: ' + p.slice(1).join('|'), 'err'); }
+            if (p[0] === 'OK') { $('conn').textContent = 'AE ' + String(p[2]).split('x')[0]; $('conn').className = 'pill on'; $('conn').title = 'Connected to After Effects ' + p[2]; } else { $('conn').textContent = 'AE error'; $('conn').className = 'pill err'; setStatus('Could not start in After Effects: ' + p.slice(1).join('|'), 'err'); }
         });
     } else {
-        setStatus('Preview mode (browser) — open in AE to create comps');
+        ['create', 'loadComp', 'update'].forEach(function (id) { $(id).classList.add('off'); });
+        $('conn').title = 'Open this panel inside After Effects (Window → Extensions → DocuGraph) to create charts';
     }
+    document.addEventListener('keydown', function (e) {
+        if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') { e.preventDefault(); $('create').click(); }
+    });
+    $('reset').addEventListener('click', function () {
+        if (!window.confirm('Reset every setting to the defaults? Your data in the panel will be replaced by the example.')) { return; }
+        state = JSON.parse(JSON.stringify(DEFAULT)); filter = 'all'; applySample(); fillForm(); rebuild();
+        setStatus('Settings reset', 'ok');
+    });
     fillForm();
     rebuild();
 }());

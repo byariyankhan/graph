@@ -1,10 +1,10 @@
 {
   "name": "docugraph",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "description": "Documentary-grade animated chart builder for Adobe After Effects (CEP panel)",
   "scripts": {
-    "test": "node tests/es3-lint.js && node tests/engine.test.js && node tests/ae-mock.test.js && node tests/ai.test.js && node tests/fuzz.test.js",
+    "test": "node tests/es3-lint.js && node tests/engine.test.js && node tests/ae-mock.test.js && node tests/ai.test.js && node tests/check.test.js && node tests/fuzz.test.js",
     "sheet": "node tools/contact-sheet.js",
     "preview": "npx http-server extension -o /client/index.html"
   }

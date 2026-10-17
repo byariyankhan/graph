@@ -8,7 +8,7 @@
  * no String.trim, no Object.keys. `npm test` lints for this.
  */
 var DG = (typeof DG !== 'undefined') ? DG : {};
-DG.version = '0.1.0';
+DG.version = '0.2.0';
 DG.charts = DG.charts || {};
 DG.VARIANTS = DG.VARIANTS || {};
 DG.TYPES = DG.TYPES || {}; /* per chart type: label, order, icon, live, columns, ai — set in each charts/*.js */
